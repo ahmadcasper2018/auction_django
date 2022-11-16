@@ -44,9 +44,17 @@ class User(AbstractUser):
         null=False,
     )
     email = models.EmailField(unique=True)
-    avatar = models.ImageField(upload_to='images/', blank=True, null=True)
+    avatar = models.ImageField(upload_to='images/%Y/%m/%d', blank=True, null=True,max_length=512)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
     objects = CustomUserManager()
+
+    @property
+    def role(self):
+        if self.is_superuser:
+            return 'superuser'
+        elif self.is_staff:
+            return 'staff'
+        return 'normal'

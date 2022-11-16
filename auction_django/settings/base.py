@@ -7,12 +7,12 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
 import environ
 from os.path import abspath, basename, dirname, join, normpath
 import os
 from sys import path
 import dj_database_url
+import datetime
 
 DJANGO_ROOT = dirname(dirname(abspath(__file__)))
 
@@ -21,7 +21,6 @@ SITE_ROOT = dirname(DJANGO_ROOT)
 
 # Site name:
 SITE_NAME = basename(DJANGO_ROOT)
-
 
 # Add our project to our pythonpath, this way we don't need to type our project
 # name in our dotted import paths:
@@ -56,11 +55,14 @@ DJANGO_APPS = [
 ]
 
 THIRD_PART_APPS = [
+    'rest_framework',
+    'djoser'
 
 ]
 
 LOCAL_APPS = [
     'account',
+    'location',
 
 ]
 
@@ -143,3 +145,20 @@ MEDIA_URL = '/media/'
 
 # Path where media is stored
 MEDIA_ROOT = normpath(join(SITE_ROOT, "media"))
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=2),
+}
+
+DJOSER = {
+    'SERIALIZERS': {'user_create': 'account.serializers.UserCreationSerializer',
+                    'current_user': 'account.serializers.UserExtendedSerializer',
+                    },
+}
