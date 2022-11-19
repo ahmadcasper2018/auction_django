@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 # Create your models here.
@@ -44,7 +45,7 @@ class User(AbstractUser):
         null=False,
     )
     email = models.EmailField(unique=True)
-    avatar = models.ImageField(upload_to='images/%Y/%m/%d', blank=True, null=True,max_length=512)
+    avatar = models.ImageField(upload_to='images/profile/%Y/%m/%d', blank=True, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
@@ -58,3 +59,19 @@ class User(AbstractUser):
         elif self.is_staff:
             return 'staff'
         return 'normal'
+
+    def __str__(self):
+        return self.email
+
+
+class Phone(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="phones"
+    )
+    phone = PhoneNumberField(null=False, blank=False, unique=True)
+    type = models.CharField(max_length=64)
+
+    def __str__(self):
+        return f'+{self.phone.country_code} {self.phone.national_number}'

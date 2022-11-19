@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from store.serializers import ShippingCompanySerializer
 from .models import (
     Address,
     City,
@@ -7,9 +9,11 @@ from .models import (
 
 
 class AddressSerializer(serializers.ModelSerializer):
+    shipping_companys = ShippingCompanySerializer(many=True)
+
     class Meta:
         model = Address
-        fields = ('id', 'user', 'address', 'city')
+        fields = ('id', 'user', 'address', 'city', 'shipping_companys')
 
 
 class CitySerializer(serializers.ModelSerializer):

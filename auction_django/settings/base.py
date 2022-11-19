@@ -2,10 +2,8 @@
 Django settings for auction_django project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/3.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import environ
 from os.path import abspath, basename, dirname, join, normpath
@@ -31,7 +29,6 @@ env = environ.Env()
 environ.Env.read_env()
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -45,6 +42,7 @@ ALLOWED_HOSTS = ['*']
 
 
 DJANGO_APPS = [
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,13 +54,16 @@ DJANGO_APPS = [
 
 THIRD_PART_APPS = [
     'rest_framework',
-    'djoser'
+    'djoser',
+    'phonenumber_field',
 
 ]
 
 LOCAL_APPS = [
     'account',
     'location',
+    'store',
+    'general',
 
 ]
 
@@ -99,7 +100,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'auction_django.wsgi.application'
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -117,7 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -129,13 +128,19 @@ USE_L10N = True
 
 USE_TZ = True
 
+gettext = lambda s: s
+LANGUAGES = [
+    ("en", gettext("English")),
+    ("ar", gettext("Arabic")),
+]
+
+MODELTRANSLATION_DEFAULT_LANGUAGE = "en"
+
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'account.User'
@@ -149,12 +154,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=2),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=15),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=15),
 }
 
 DJOSER = {

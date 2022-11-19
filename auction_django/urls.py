@@ -22,7 +22,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
-    path('location/', include('location.urls'))
+    path('location/', include('location.urls')),
+    path('account/', include('account.urls')),
+    path('store/', include('store.urls')),
 ]
 
 if settings.DEBUG:
