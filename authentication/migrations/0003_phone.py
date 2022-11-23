@@ -8,7 +8,7 @@ import phonenumber_field.modelfields
 
 class Migration(migrations.Migration):
 
-    dependencies = [("account", "0002_alter_user_avatar")]
+    dependencies = [("authentication", "0002_alter_user_avatar")]
 
     operations = [
         migrations.CreateModel(

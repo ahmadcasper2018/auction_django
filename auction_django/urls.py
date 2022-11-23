@@ -23,7 +23,8 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('location/', include('location.urls')),
-    path('account/', include('account.urls')),
+    path('auth/authentication/', include('authentication.urls')),
+    path('accounts/', include('allauth.urls')),
     path('store/', include('store.urls')),
 ]
 

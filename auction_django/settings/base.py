@@ -49,6 +49,7 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
 ]
 
@@ -56,11 +57,15 @@ THIRD_PART_APPS = [
     'rest_framework',
     'djoser',
     'phonenumber_field',
-
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    # ... include the providers you want to enable:
+    'allauth.socialaccount.providers.google',
 ]
 
 LOCAL_APPS = [
-    'account',
+    'authentication',
     'location',
     'store',
     'general',
@@ -143,7 +148,7 @@ STATIC_URL = '/static/'
 # Default primary key field type
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'account.User'
+AUTH_USER_MODEL = 'authentication.User'
 
 # Base url to serve media files
 MEDIA_URL = '/media/'
@@ -165,7 +170,26 @@ SIMPLE_JWT = {
 }
 
 DJOSER = {
-    'SERIALIZERS': {'user_create': 'account.serializers.UserCreationSerializer',
-                    'current_user': 'account.serializers.UserExtendedSerializer',
+    'SERIALIZERS': {'user_create': 'authentication.serializers.UserCreationSerializer',
+                    'current_user': 'authentication.serializers.UserExtendedSerializer',
+                    'user': 'authentication.serializers.UserExtendedSerializer',
                     },
+}
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+SITE_ID = 1
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+    }
 }

@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("account", "0003_phone")]
+    dependencies = [("authentication", "0003_phone")]
 
     operations = [
         migrations.AlterField(

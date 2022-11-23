@@ -1,9 +1,12 @@
+from unicodedata import category
+
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
 
 from django_softdelete.models import SoftDeleteModel
 from autoslug import AutoSlugField
+from django_extensions.db.models import TimeStampedModel
 
 from .managers import CategoryManager
 from location.models import Address
@@ -38,6 +41,17 @@ class Category(SoftDeleteModel):
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
     objects = CategoryManager()
+
+    @property
+    def is_parent(self):
+        return False if self.parent else True
+
+    def save(self, *args, **kwargs):
+        if (not self.active) and self.products:
+            self.products.update(
+                is_active=False
+            )
+        super(Category, self).save(*args, **kwargs)
 
     @property
     def status(self):
@@ -77,6 +91,8 @@ class Product(models.Model):
     current_price = models.DecimalField(max_digits=6, decimal_places=3)
     increase_amount = models.DecimalField(max_digits=6, decimal_places=3)
     slug = AutoSlugField(populate_from='title', unique=True)
+    active = models.BooleanField(default=True)
+    amount = models.PositiveIntegerField()
 
     def get_absolute_url(self):
         return reverse('category-detail', args=[self.slug])
@@ -95,7 +111,7 @@ class ProductAttribut(models.Model):
 
     attribut = models.ForeignKey(
         Attribut,
-        related_name='products',
+        related_name='product_attrs',
         on_delete=models.CASCADE,
     )
 
@@ -160,6 +176,13 @@ class Order(models.Model):
 
 
 class ProductOrder(models.Model):
+    DIRECT = 'd'
+    MOZAIDA = 'm'
+    REQUEST_TYPES = (
+        (DIRECT, 'd'),
+        (MOZAIDA, 'm'),
+
+    )
     product = models.ForeignKey(
         Product,
         related_name='product_orders',
@@ -177,6 +200,48 @@ class ProductOrder(models.Model):
     )
     quantity = models.PositiveIntegerField()
     attribut = models.JSONField(null=True, blank=True)
+    request_type = models.CharField(max_length=1, choices=REQUEST_TYPES, default=DIRECT)
+
+    @property
+    def price(self):
+        return self.product.price * self.quantity
 
     def __str__(self):
         return f'User {self.order.user} ordered {self.quantity} of {self.product.title}'
+
+
+class CategoryAttribute(models.Model):
+    category = models.ForeignKey(
+        Category,
+        related_name='category_attrs',
+        on_delete=models.SET_NULL,
+        null=True,
+
+    )
+    attribut = models.ForeignKey(
+        Attribut,
+        related_name='category_attrs',
+        on_delete=models.SET_NULL,
+        null=True,
+
+    )
+
+
+class BazarLog(TimeStampedModel):
+    by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="bazar_logs",
+        null=True,
+        blank=True,
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        related_name="bazar_logs",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"log by {self.by} on {self.product}"

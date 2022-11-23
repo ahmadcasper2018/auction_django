@@ -10,22 +10,27 @@ from .models import (
 
 class AttributTranslationOptions(TranslationOptions):
     fields = ('title',)
+    required_languages = ('en', 'ar')
 
 
 class AttributDetailsTranslationOptions(TranslationOptions):
     fields = ('value',)
+    required_languages = ('en', 'ar')
 
 
 class CategoryTranslationOptions(TranslationOptions):
     fields = ('title',)
+    required_languages = ('en', 'ar')
 
 
 class ProductTranslationOptions(TranslationOptions):
     fields = ('title', 'description')
+    required_languages = ('en', 'ar')
 
 
 class ShippingCompanyTranslationOptions(TranslationOptions):
     fields = ('name',)
+    required_languages = ('en', 'ar')
 
 
 translator.register(Attribut, AttributTranslationOptions)

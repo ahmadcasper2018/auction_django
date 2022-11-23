@@ -15,7 +15,6 @@ class Governorate(models.Model):
 
 class City(models.Model):
     title = models.CharField(max_length=255)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     governorate = models.ForeignKey(
         Governorate,
         related_name="cities",

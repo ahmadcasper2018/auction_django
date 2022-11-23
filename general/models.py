@@ -3,12 +3,13 @@ from django.db import models
 
 # Create your models here.
 class ContactSettings(models.Model):
-    phone = models.CharField(max_length=64)
-    instagram = models.CharField(max_length=64)
-    whatsapp = models.CharField(max_length=64)
-    facebook = models.CharField(max_length=64)
-    gmail = models.CharField(max_length=64)
-    location = models.CharField(max_length=255)
+    phone = models.CharField(max_length=64, null=True, blank=True)
+    instagram = models.CharField(max_length=64, null=True, blank=True)
+    whatsapp = models.CharField(max_length=64, null=True, blank=True)
+    facebook = models.CharField(max_length=64, null=True, blank=True)
+    gmail = models.CharField(max_length=64, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    about = models.TextField(null=True, blank=True)
 
 
 class Question(models.Model):
