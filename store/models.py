@@ -1,3 +1,4 @@
+from random import choices
 from unicodedata import category
 
 from django.db import models
@@ -35,16 +36,25 @@ class AttributDetails(models.Model):
 
 
 class Category(SoftDeleteModel):
+    BAZAR = 'bazar'
+    DIRECT = 'direct'
+    MOZAEDA = 'mozaeda'
+
+    CATEGORY_CHOICES = (
+        (BAZAR, 'Bazar'),
+        (DIRECT, 'Direct'),
+        (MOZAEDA, 'Mozaeda'),
+    )
+
     title = models.CharField(max_length=128)
-    slug = AutoSlugField(populate_from='title', unique=True)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='childs', on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
     objects = CategoryManager()
 
     @property
-    def is_parent(self):
-        return False if self.parent else True
+    def parent_title(self):
+        return self.title if self.parent else self.parent.title
 
     def save(self, *args, **kwargs):
         if (not self.active) and self.products:
@@ -58,11 +68,7 @@ class Category(SoftDeleteModel):
         return 'active' if self.active else 'disabled'
 
     class Meta:
-        unique_together = ('slug', 'parent',)
         verbose_name_plural = "categories"
-
-    def get_absolute_url(self):
-        return reverse('category-detail', args=[self.slug])
 
     def __str__(self):
         return self.title
@@ -90,12 +96,10 @@ class Product(models.Model):
     min_price = models.DecimalField(max_digits=6, decimal_places=3)
     current_price = models.DecimalField(max_digits=6, decimal_places=3)
     increase_amount = models.DecimalField(max_digits=6, decimal_places=3)
-    slug = AutoSlugField(populate_from='title', unique=True)
     active = models.BooleanField(default=True)
     amount = models.PositiveIntegerField()
-
-    def get_absolute_url(self):
-        return reverse('category-detail', args=[self.slug])
+    start_time = models.DateTimeField(null=True, blank=False)
+    end_time = models.DateTimeField(null=True, blank=False)
 
     def __str__(self):
         return self.title
@@ -176,13 +180,6 @@ class Order(models.Model):
 
 
 class ProductOrder(models.Model):
-    DIRECT = 'd'
-    MOZAIDA = 'm'
-    REQUEST_TYPES = (
-        (DIRECT, 'd'),
-        (MOZAIDA, 'm'),
-
-    )
     product = models.ForeignKey(
         Product,
         related_name='product_orders',
@@ -198,9 +195,8 @@ class ProductOrder(models.Model):
         null=True,
 
     )
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(null=True)
     attribut = models.JSONField(null=True, blank=True)
-    request_type = models.CharField(max_length=1, choices=REQUEST_TYPES, default=DIRECT)
 
     @property
     def price(self):
@@ -227,7 +223,7 @@ class CategoryAttribute(models.Model):
     )
 
 
-class BazarLog(TimeStampedModel):
+class OrderLog(TimeStampedModel):
     by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -235,13 +231,15 @@ class BazarLog(TimeStampedModel):
         null=True,
         blank=True,
     )
-    product = models.ForeignKey(
-        Product,
+    order = models.ForeignKey(
+        ProductOrder,
         on_delete=models.SET_NULL,
-        related_name="bazar_logs",
+        related_name="logs",
         null=True,
         blank=True,
     )
+
+    mozaeda = models.BooleanField(default=False)
 
     def __str__(self):
         return f"log by {self.by} on {self.product}"

@@ -13,8 +13,11 @@ from .models import (
     ProductOrder,
     ProductAttribut,
     Attribut,
-    BazarLog
+    OrderLog,
+
 )
+
+
 # from authentication.serializers import UserProductSerializer
 
 
@@ -104,6 +107,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductOrderSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     price = serializers.SerializerMethodField(read_only=True)
+    directed_bazar = serializers.BooleanField()
 
     def get_price(self, instance):
         return instance.product.price * instance.quantity
@@ -111,36 +115,21 @@ class ProductOrderSerializer(serializers.ModelSerializer):
     def validate(self, data):
         product = Product.objects.filter(pk=data.get("product")).first()
         quantity = data.get("quantity")
-        request_type = data.get('request_type')
-        if request_type == 'd' and (quantity < product.amount):
-            raise ValidationError(f"you can't order more then {product.amount} of this product")
-        return data
+        category_title = product.category.parent_title
+        directed_mozaeda = data.get('directed_mozaeda')
+        if category_title in ['direct', 'bazar']:
+            if not quantity:
+                raise ValidationError(f"please enter the amount of products you want to purchase")
+            elif quantity < product.amount:
+                raise ValidationError(f"you can't order more then {product.amount} of this product")
+        elif category_title != 'mozaeda':
+            raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
-    # def create(self, validated_data):
-    #     product = get_object_or_404(Product, id=validated_data.get('product'))
-    #     request_type = validated_data.get('request_type')
-    #     quantity = validated_data.get('quantity')
-    #     if request_type == 'd':
+        return data
 
     class Meta:
         model = ProductOrder
         fields = '__all__'
-
-
-class BazarProductOrderSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    price = serializers.SerializerMethodField(read_only=True)
-
-    def get_price(self, instance):
-        return instance.product.price
-
-    def create(self, validated_data):
-        instance = super(BazarProductOrderSerializer, self).create(validated_data)
-        BazarLog.objects.create(by=instance.order.user, product=instance.product)
-
-    class Meta:
-        model = ProductOrder
-        exclude = ['quantity']
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -204,11 +193,21 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         product_orders = validated_data.pop('product_orders')
+        directed_mozaeda = validated_data.pop('directed_mozaeda')
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
-            new_pd = ProductOrder(**product_order)
+            serializer = ProductOrderSerializer(product_order)
+            serializer.is_valid(raise_exception=True)
+            new_pd = serializer.save()
             new_pd.order = instance
-            new_pd.save()
+            if new_pd.product.category.parent_title == 'mozaeda':
+                new_pd.product.current_price = new_pd.product.current_price + new_pd.product.increase_amount
+                instance.save()
+            elif new_pd.product.category.parent_title in ['bazar', 'direct']:
+                new_pd.product.amount = new_pd.product.amount - new_pd.product.quantity
+                instance.save()
+
+        OrderLog.objects.create(order=instance, mozaeda=bool(directed_mozaeda))
         return instance
 
     def update(self, instance, validated_data):

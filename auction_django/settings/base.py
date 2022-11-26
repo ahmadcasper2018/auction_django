@@ -55,6 +55,7 @@ DJANGO_APPS = [
 
 THIRD_PART_APPS = [
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     'phonenumber_field',
     'allauth',
@@ -62,6 +63,9 @@ THIRD_PART_APPS = [
     'allauth.socialaccount',
     # ... include the providers you want to enable:
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'rest_auth',
+
 ]
 
 LOCAL_APPS = [
@@ -89,7 +93,7 @@ ROOT_URLCONF = 'auction_django.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [normpath(join(SITE_ROOT, "templates"))],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -180,7 +184,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-SITE_ID = 1
+SITE_ID = 2
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -193,3 +197,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+REST_USE_JWT = True
+LOGIN_REDIRECT_URL = '/'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '643689312750-t2o06qlovpc911he0fmut7c37ahppj09.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'

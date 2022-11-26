@@ -9,14 +9,6 @@ from .serializers import *
 # Create your views here.
 
 
-class BazarProductOrderViewSet(viewsets.ModelViewSet):
-    queryset = ProductOrder.objects.filter(request_type='m')
-    serializer_class = BazarProductOrderSerializer
-
-    def get_queryset(self):
-        return super(BazarProductOrderViewSet, self).get_queryset().filter(order__user=self.request.user)
-
-
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -52,7 +44,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class ProductOrderViewSet(viewsets.ModelViewSet):
-    queryset = ProductOrder.objects.filter(request_type='d')
     serializer_class = ProductOrderSerializer
 
     def get_queryset(self):
