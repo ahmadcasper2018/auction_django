@@ -65,6 +65,7 @@ THIRD_PART_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
     'rest_auth',
+    'django_extensions',
 
 ]
 

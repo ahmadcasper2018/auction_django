@@ -1,25 +1,25 @@
+from abc import ABC
+
 from rest_framework import serializers
 from .models import Question, KeyWord
 
 
-class KeywordSerializer(serializers.ModelSerializer):
+class KeywordSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Question
-        fields = ('id', 'keyword')
+    keyword = serializers.CharField(max_length=128)
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    keywords = KeywordSerializer(many=True, read_only=True)
+    keyword = KeywordSerializer(many=True)
 
     def create(self, validated_data):
-        keywords = validated_data.pop('keywords')
+        keywords = validated_data.pop('keyword')
         instance = super(QuestionSerializer, self).create(validated_data)
         for key in keywords:
-            KeyWord.objects.create(question=instance, **key)
+            new_keyword, create = KeyWord.objects.get_or_create(**key)
+            instance.keyword.add(new_keyword)
         return instance
 
     class Meta:
         model = Question
-        fields = ('id', 'question', 'answer', 'keywords')
+        fields = ('id', 'question', 'answer', 'keyword')

@@ -12,22 +12,20 @@ class ContactSettings(models.Model):
     about = models.TextField(null=True, blank=True)
 
 
-class Question(models.Model):
-    question = models.CharField(max_length=512)
-    answer = models.TextField()
-
-    def __str__(self):
-        return self.question
-
-
 class KeyWord(models.Model):
     keyword = models.CharField(max_length=128)
-    question = models.ForeignKey(
-        Question,
-        on_delete=models.CASCADE,
-        related_name="keywords"
-
-    )
 
     def __str__(self):
         return self.keyword
+
+
+class Question(models.Model):
+    question = models.CharField(max_length=512)
+    answer = models.TextField()
+    keyword = models.ManyToManyField(
+        KeyWord,
+        related_name="question_kewords"
+    )
+
+    def __str__(self):
+        return self.question

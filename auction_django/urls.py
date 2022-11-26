@@ -49,7 +49,8 @@ urlpatterns = [
     path('store/', include('store.urls')),
     # path('dj-rest-auth/', include('dj_rest_auth.urls')),
     # path('rest-auth/google/', GoogleLoginView.as_view()),
-    path('', index)
+    path('', index),
+    path('general/', include('general.urls'))
 ]
 
 if settings.DEBUG:
