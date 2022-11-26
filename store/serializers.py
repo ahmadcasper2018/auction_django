@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
+from location.models import City, Address
 from .models import (
     Product,
     Category,
@@ -21,32 +22,39 @@ from .models import (
 # from authentication.serializers import UserProductSerializer
 
 
-class CategoryProductSerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
+class CompanyAddressSerializer(serializers.Serializer):
+    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
+    address = serializers.CharField(max_length=255)
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+
+class CategoryProductSerializer(serializers.ModelSerializer):
+    # title = serializers.SerializerMethodField()
+    id = serializers.IntegerField()
+
+    # def get_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
 
     class Meta:
         model = Product
-        fields = ('id', 'title')
+        fields = ('id', 'title', 'title_en', 'title_ar')
 
 
-class ProductCategorySerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
+class ProductCategorySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField(max_length=255)
+    title_en = serializers.CharField(max_length=255)
+    title_ar = serializers.CharField(max_length=255)
+    # title = serializers.SerializerMethodField()
+    # def get_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
 
-    class Meta:
-        model = Category
-        fields = ('id', 'title')
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -62,13 +70,13 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
 
 
 class AttributDetailsSerializer(serializers.ModelSerializer):
-    value = serializers.SerializerMethodField()
+    # value = serializers.SerializerMethodField()
 
-    def get_value(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # def get_value(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
 
     class Meta:
         model = AttributDetails
@@ -91,13 +99,14 @@ class CategorySerializer(serializers.ModelSerializer):
     childs = SubCategorySerializer(many=True)
     category_attrs = CategoryAttributSerializer(many=True)
     products = CategoryProductSerializer(many=True)
-    title = serializers.SerializerMethodField()
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # title = serializers.SerializerMethodField()
+
+    # def get_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
 
     class Meta:
         model = Category
@@ -135,23 +144,37 @@ class ProductOrderSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
     category = ProductCategorySerializer()
-    attrs = ProductAttributSerializer(many=True)
-    product_orders = ProductOrderSerializer(many=True)
-    media = MediaSerializer(many=True)
-    title = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
+    attrs = ProductAttributSerializer(many=True, required=False)
+    product_orders = ProductOrderSerializer(many=True, required=False)
+    media = MediaSerializer(many=True, required=False)
+    # title = serializers.SerializerMethodField()
+    # description = serializers.SerializerMethodField()
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # def get_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
+    #
+    # def get_description(self, instance):
+    #     return {
+    #         "en": instance.description_en,
+    #         "ar": instance.description_ar
+    #     }
 
-    def get_description(self, instance):
-        return {
-            "en": instance.description_en,
-            "ar": instance.description_ar
-        }
+    def create(self, validated_data):
+        category = validated_data.pop('category')
+        validated_data.update(
+            {
+                "user": self.context['request'].user
+            }
+        )
+        instance = super(ProductSerializer, self).create(validated_data)
+        category_obj = get_object_or_404(Category, pk=int(category['id']))
+        instance.category = category_obj
+        instance.save()
+        return instance
 
     class Meta:
         model = Product
@@ -159,11 +182,11 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'user', 'category', 'title', 'description', 'image', 'price', 'min_price',
             'current_price',
             'increase_amount',
-            'slug',
             'attrs',
             'product_orders',
             'media',
             'active',
+            'amount',
         )
 
 
@@ -171,13 +194,14 @@ class AttributSerializer(serializers.ModelSerializer):
     values = AttributDetailsSerializer(many=True)
     category_attrs = CategoryAttributSerializer(many=True)
     product_attrs = ProductAttributSerializer(many=True)
-    title = serializers.SerializerMethodField()
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # title = serializers.SerializerMethodField()
+
+    # def get_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
 
     class Meta:
         model = Attribut
@@ -229,13 +253,21 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class ShippingCompanySerializer(serializers.ModelSerializer):
     orders = OrderSerializer(many=True)
-    title = serializers.SerializerMethodField()
+    # name = serializers.SerializerMethodField()
+    address = CompanyAddressSerializer()
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # def get_name(self, instance):
+    #     return {
+    #         "en": instance.name_en,
+    #         "ar": instance.name_ar
+    #     }
+
+    def create(self, validated_data):
+        address = validated_data.pop('address')
+        instance = super(ShippingCompanySerializer, self).create(validated_data)
+        location, create = Address.objects.get_or_create(**address)
+        instance.address = location
+        return instance
 
     class Meta:
         model = ShippingCompany

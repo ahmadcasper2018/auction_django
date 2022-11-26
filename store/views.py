@@ -16,15 +16,31 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return super(ProductViewSet, self).get_queryset().filter(user=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+
+class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class ShippingCompanyViewSet(viewsets.ReadOnlyModelViewSet):
+class ShippingCompanyViewSet(viewsets.ModelViewSet):
     queryset = ShippingCompany.objects.all()
     serializer_class = ShippingCompanySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
 
 class OrderViewSet(viewsets.ModelViewSet):

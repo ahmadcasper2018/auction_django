@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Question, KeyWord
+from .models import Question, KeyWord, ContactSettings
 
 # Register your models here.
 
 admin.site.register(Question)
 admin.site.register(KeyWord)
+admin.site.register(ContactSettings)

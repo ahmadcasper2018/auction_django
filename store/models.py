@@ -1,6 +1,8 @@
+from decimal import Decimal
 from random import choices
 from unicodedata import category
 
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
@@ -92,10 +94,22 @@ class Product(models.Model):
     title = models.CharField(max_length=192)
     description = models.TextField()
     image = models.ImageField(upload_to='images/products/%Y/%m/%d', blank=True, null=True)
-    price = models.DecimalField(max_digits=6, decimal_places=3)
-    min_price = models.DecimalField(max_digits=6, decimal_places=3)
-    current_price = models.DecimalField(max_digits=6, decimal_places=3)
-    increase_amount = models.DecimalField(max_digits=6, decimal_places=3)
+    price = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        validators=[MinValueValidator(Decimal('0.001'))])
+    min_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        validators=[MinValueValidator(Decimal('0.001'))])
+    current_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        validators=[MinValueValidator(Decimal('0.001'))])
+    increase_amount = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        validators=[MinValueValidator(Decimal('0.001'))])
     active = models.BooleanField(default=True)
     amount = models.PositiveIntegerField()
     start_time = models.DateTimeField(null=True, blank=False)
