@@ -12,10 +12,16 @@ from .models import (
 
 )
 
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['title', 'parent_title']
+    fields = ['title', 'parent', 'active', 'image']
+
+
 # Register your models here.
 admin.site.register(Attribut)
 admin.site.register(AttributDetails)
-admin.site.register(Category)
+admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product)
 admin.site.register(ProductAttribut)
 admin.site.register(Media)

@@ -48,7 +48,7 @@ class Category(SoftDeleteModel):
         (MOZAEDA, 'Mozaeda'),
     )
 
-    title = models.CharField(max_length=128)
+    title = models.CharField(max_length=128, choices=CATEGORY_CHOICES)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='childs', on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
@@ -56,7 +56,10 @@ class Category(SoftDeleteModel):
 
     @property
     def parent_title(self):
-        return self.title if self.parent else self.parent.title
+        if not self.parent:
+            return 'No parents'
+        else:
+            return self.parent.title
 
     def save(self, *args, **kwargs):
         if (not self.active) and self.products:
@@ -105,13 +108,13 @@ class Product(models.Model):
     current_price = models.DecimalField(
         max_digits=6,
         decimal_places=3,
-        validators=[MinValueValidator(Decimal('0.001'))])
+    )
     increase_amount = models.DecimalField(
         max_digits=6,
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     active = models.BooleanField(default=True)
-    amount = models.PositiveIntegerField()
+    amount = models.PositiveIntegerField(null=True, blank=True)
     start_time = models.DateTimeField(null=True, blank=False)
     end_time = models.DateTimeField(null=True, blank=False)
 
