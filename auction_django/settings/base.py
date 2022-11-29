@@ -64,7 +64,7 @@ THIRD_PART_APPS = [
     # ... include the providers you want to enable:
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
-    'rest_auth',
+    'dj_rest_auth',
     'django_extensions',
 
 ]
