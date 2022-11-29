@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/incaregc/repositories/auction_django/
+    - /bin/cp * $DEPLOYPATH
