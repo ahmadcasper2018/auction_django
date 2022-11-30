@@ -45,16 +45,12 @@ class CategoryProductSerializer(serializers.ModelSerializer):
 class ProductCategorySerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField(max_length=255)
-    title_en = serializers.CharField(max_length=255)
-    title_ar = serializers.CharField(max_length=255)
     # title = serializers.SerializerMethodField()
     # def get_title(self, instance):
     #     return {
     #         "en": instance.title_en,
     #         "ar": instance.title_ar
     #     }
-
-
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -114,18 +110,21 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductOrderSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     price = serializers.SerializerMethodField(read_only=True)
-    directed_bazar = serializers.BooleanField()
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+
+    # directed_bazar = serializers.BooleanField()
 
     def get_price(self, instance):
         return instance.product.price * instance.quantity
 
     def validate(self, data):
+        print(data)
         product = Product.objects.filter(pk=data.get("product")).first()
         quantity = data.get("quantity")
         category_title = product.category.parent_title
-        directed_mozaeda = data.get('directed_mozaeda')
+        # directed_mozaeda = data.get('directed_mozaeda')
         if category_title in ['direct', 'bazar']:
             if not quantity:
                 raise ValidationError(f"please enter the amount of products you want to purchase")
@@ -143,9 +142,9 @@ class ProductOrderSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
-    category = ProductCategorySerializer()
+    category = ProductCategorySerializer(read_only=True)
     attrs = ProductAttributSerializer(many=True, required=False)
-    product_orders = ProductOrderSerializer(many=True, required=False)
+    product_orders = ProductOrderSerializer(many=True, required=False, read_only=True)
     media = MediaSerializer(many=True, required=False)
     # title = serializers.SerializerMethodField()
     # description = serializers.SerializerMethodField()
@@ -165,9 +164,11 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category = validated_data.pop('category')
+        print(validated_data)
+
         validated_data.update(
             {
-                "user": self.context['request'].user
+                "user": self.context['request'].user.pk
             }
         )
         instance = super(ProductSerializer, self).create(validated_data)
@@ -179,7 +180,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'id', 'user', 'category', 'title', 'description', 'image', 'price', 'min_price',
+            'id', 'user', 'category', 'title', 'title_en', 'title_ar', 'description', 'image', 'price', 'min_price',
             'current_price',
             'increase_amount',
             'attrs',
@@ -217,10 +218,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         product_orders = validated_data.pop('product_orders')
-        directed_mozaeda = validated_data.pop('directed_mozaeda')
+        directed_mozaeda = validated_data.pop('directed_mozaeda', None)
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
-            serializer = ProductOrderSerializer(product_order)
+            serializer = ProductOrderSerializer(data=product_order)
             serializer.is_valid(raise_exception=True)
             new_pd = serializer.save()
             new_pd.order = instance
