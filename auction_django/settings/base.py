@@ -157,7 +157,7 @@ AUTH_USER_MODEL = 'authentication.User'
 
 # Base url to serve media files
 MEDIA_URL = '/media/'
-
+STATIC_ROOT = normpath(join(SITE_ROOT, "assets"))
 # Path where media is stored
 MEDIA_ROOT = normpath(join(SITE_ROOT, "media"))
 REST_FRAMEWORK = {

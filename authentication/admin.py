@@ -1,5 +1,4 @@
 from django.contrib import admin
-from social_core.backends import username
 
 from .models import User, Phone
 

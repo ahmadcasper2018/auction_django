@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-# from authentication.views import GoogleLoginView
+from authentication.views import GoogleLoginView
 from allauth.socialaccount.providers.google import views as google_views
 
 from django.views import View
@@ -48,7 +48,7 @@ urlpatterns = [
     # path('accounts/profile/', RedirectSocial.as_view()),
     path('store/', include('store.urls')),
     # path('dj-rest-auth/', include('dj_rest_auth.urls')),
-    # path('rest-auth/google/', GoogleLoginView.as_view()),
+    path('rest-auth/google/', GoogleLoginView.as_view()),
     path('', index),
     path('general/', include('general.urls'))
 ]
