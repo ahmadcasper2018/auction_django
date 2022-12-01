@@ -1,3 +1,4 @@
+from django.core.files import File
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -88,8 +89,16 @@ class MediaViewSet(viewsets.ModelViewSet):
     queryset = Media.objects.all()
     serializer_class = MediaSerializer
 
-    def get_queryset(self):
-        return super(MediaViewSet, self).get_queryset().filter(product__user=self.request.user)
+
+    # def get_queryset(self):
+    #     return super(MediaViewSet, self).get_queryset().filter(product__user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        for file in self.request.FILES.getlist('file'):
+            Media.objects.create(file=File(file))
+        return Response(status=200)
+
+
 
 
 class AttributDetailsViewSet(viewsets.ModelViewSet):

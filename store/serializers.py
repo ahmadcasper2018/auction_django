@@ -54,9 +54,14 @@ class ProductCategorySerializer(serializers.Serializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField(read_only=True)
+
+    def get_type(self, instance):
+        return instance.type
+
     class Meta:
         model = Media
-        fields = '__all__'
+        fields = ('id', 'file', 'type')
 
 
 class CategoryAttributSerializer(serializers.ModelSerializer):
@@ -83,6 +88,12 @@ class ProductAttributSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductAttribut
         fields = '__all__'
+
+
+class ProductAttributSubSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductAttribut
+        fields = ('id', 'attribut', 'value',)
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
@@ -142,10 +153,10 @@ class ProductOrderSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
-    category = ProductCategorySerializer(read_only=True)
-    attrs = ProductAttributSerializer(many=True, required=False)
-    product_orders = ProductOrderSerializer(many=True, required=False, read_only=True)
-    media = MediaSerializer(many=True, required=False)
+    category = ProductCategorySerializer()
+    attrs = ProductAttributSubSerializer(many=True, required=False)
+    product_orders = ProductOrderSerializer(many=True, read_only=True)
+    media = MediaSerializer(many=True, read_only=True)
     # title = serializers.SerializerMethodField()
     # description = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -163,17 +174,30 @@ class ProductSerializer(serializers.ModelSerializer):
     #     }
 
     def create(self, validated_data):
-        category = validated_data.pop('category')
-        print(validated_data)
-
+        category = validated_data.pop('category', None)
+        attrs = validated_data.pop('attrs', None)
+        media = validated_data.pop('media_files', None)
         validated_data.update(
             {
-                "user": self.context['request'].user.pk
+                "user": self.context['request'].user
             }
         )
+        print(validated_data)
         instance = super(ProductSerializer, self).create(validated_data)
         category_obj = get_object_or_404(Category, pk=int(category['id']))
         instance.category = category_obj
+        if attrs:
+            for attr in attrs:
+                obj, created = ProductAttribut.objects.get_or_create(product=instance, **attr)
+                obj.product = instance
+                obj.save()
+                instance.attrs.add(obj)
+        if media:
+            for file_id in media:
+                media_obj = get_object_or_404(Media, pk=int(file_id))
+                instance.media.add(media_obj)
+                instance.save()
+
         instance.save()
         return instance
 

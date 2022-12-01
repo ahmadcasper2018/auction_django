@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from random import choices
 from unicodedata import category
@@ -138,13 +139,18 @@ class ProductAttribut(models.Model):
 
 
 class Media(models.Model):
+    file = models.FileField(upload_to='images/products_media/%Y/%m/%d')
     product = models.ForeignKey(
         Product,
+        on_delete=models.SET_NULL,
         related_name='media',
-        on_delete=models.CASCADE,
+        null=True
     )
-    type = models.CharField(max_length=64)
-    file = models.FileField(upload_to='images/products_media/%Y/%m/%d')
+
+    @property
+    def type(self):
+        name, extension = os.path.splitext(self.file.name)
+        return extension
 
 
 class ShippingCompany(models.Model):
