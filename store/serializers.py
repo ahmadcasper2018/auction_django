@@ -176,7 +176,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
-        media = validated_data.pop('media_files', None)
+        media_files = self.context['request'].data[0].get('media_files')
         validated_data.update(
             {
                 "user": self.context['request'].user
@@ -192,8 +192,8 @@ class ProductSerializer(serializers.ModelSerializer):
                 obj.product = instance
                 obj.save()
                 instance.attrs.add(obj)
-        if media:
-            for file_id in media:
+        if media_files:
+            for file_id in media_files:
                 media_obj = get_object_or_404(Media, pk=int(file_id))
                 instance.media.add(media_obj)
                 instance.save()

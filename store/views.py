@@ -89,9 +89,13 @@ class MediaViewSet(viewsets.ModelViewSet):
     queryset = Media.objects.all()
     serializer_class = MediaSerializer
 
-
     # def get_queryset(self):
     #     return super(MediaViewSet, self).get_queryset().filter(product__user=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     def create(self, request, *args, **kwargs):
         for file in self.request.FILES.getlist('file'):
