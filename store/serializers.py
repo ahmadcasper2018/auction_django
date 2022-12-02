@@ -18,8 +18,24 @@ from .models import (
 
 )
 
+from drf_extra_fields.fields import Base64ImageField
+
 
 # from authentication.serializers import UserProductSerializer
+
+
+def validate_product_order(data):
+    product = data.get("product")
+    quantity = data.get("quantity")
+    category_title = product.category.parent_title
+    # directed_mozaeda = data.get('directed_mozaeda')
+    if category_title in ['direct', 'bazar']:
+        if not quantity:
+            raise ValidationError(f"please enter the amount of products you want to purchase")
+        elif quantity > product.amount:
+            raise ValidationError(f"you can't order more then {product.amount} of this product")
+    elif category_title != 'mozaeda':
+        raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
 
 class CompanyAddressSerializer(serializers.Serializer):
@@ -30,6 +46,7 @@ class CompanyAddressSerializer(serializers.Serializer):
 class CategoryProductSerializer(serializers.ModelSerializer):
     # title = serializers.SerializerMethodField()
     id = serializers.IntegerField()
+    image = Base64ImageField(required=False)
 
     # def get_title(self, instance):
     #     return {
@@ -65,9 +82,18 @@ class MediaSerializer(serializers.ModelSerializer):
 
 
 class CategoryAttributSerializer(serializers.ModelSerializer):
+    # attribut_title = serializers.SerializerMethodField()
+    # attribut_value = serializers.SerializerMethodField()
+    #
+    # def get_attribut_title(self, instance):
+    #     return instance.attribut.title
+    #
+    # def get_attribut_title(self, instance):
+    #     return instance.attribut.title
+
     class Meta:
         model = CategoryAttribute
-        fields = '__all__'
+        fields = ('id', 'attribut')
 
 
 class AttributDetailsSerializer(serializers.ModelSerializer):
@@ -81,7 +107,7 @@ class AttributDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AttributDetails
-        fields = '__all__'
+        fields = ('id', 'value', 'value_en', 'value_ar')
 
 
 class ProductAttributSerializer(serializers.ModelSerializer):
@@ -103,9 +129,10 @@ class SubCategorySerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    childs = SubCategorySerializer(many=True)
-    category_attrs = CategoryAttributSerializer(many=True)
-    products = CategoryProductSerializer(many=True)
+    childs = SubCategorySerializer(many=True, read_only=True)
+    category_attrs = CategoryAttributSerializer(many=True, required=False)
+    products = CategoryProductSerializer(many=True, read_only=True)
+    image = Base64ImageField(required=False)
 
     # title = serializers.SerializerMethodField()
 
@@ -115,6 +142,18 @@ class CategorySerializer(serializers.ModelSerializer):
     #         "ar": instance.title_ar
     #     }
 
+    def create(self, validated_data):
+        category_attrs = validated_data.pop('category_attrs')
+        instance = super(CategorySerializer, self).create(validated_data)
+        if category_attrs:
+            for attr in category_attrs:
+                obj, created = CategoryAttribute.objects.get_or_create(**attr)
+                obj.category = instance
+                obj.save()
+                instance.category_attrs.add(obj)
+            instance.save()
+        return instance
+
     class Meta:
         model = Category
         fields = '__all__'
@@ -123,28 +162,12 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductOrderSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     price = serializers.SerializerMethodField(read_only=True)
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
+    # product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     # directed_bazar = serializers.BooleanField()
 
     def get_price(self, instance):
         return instance.product.price * instance.quantity
-
-    def validate(self, data):
-        print(data)
-        product = Product.objects.filter(pk=data.get("product")).first()
-        quantity = data.get("quantity")
-        category_title = product.category.parent_title
-        # directed_mozaeda = data.get('directed_mozaeda')
-        if category_title in ['direct', 'bazar']:
-            if not quantity:
-                raise ValidationError(f"please enter the amount of products you want to purchase")
-            elif quantity < product.amount:
-                raise ValidationError(f"you can't order more then {product.amount} of this product")
-        elif category_title != 'mozaeda':
-            raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
-
-        return data
 
     class Meta:
         model = ProductOrder
@@ -157,6 +180,7 @@ class ProductSerializer(serializers.ModelSerializer):
     attrs = ProductAttributSubSerializer(many=True, required=False)
     product_orders = ProductOrderSerializer(many=True, read_only=True)
     media = MediaSerializer(many=True, read_only=True)
+    image = Base64ImageField(required=False)
     # title = serializers.SerializerMethodField()
     # description = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -176,13 +200,13 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
+
         media_files = self.context['request'].data[0].get('media_files')
         validated_data.update(
             {
                 "user": self.context['request'].user
             }
         )
-        print(validated_data)
         instance = super(ProductSerializer, self).create(validated_data)
         category_obj = get_object_or_404(Category, pk=int(category['id']))
         instance.category = category_obj
@@ -198,6 +222,34 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.media.add(media_obj)
                 instance.save()
 
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        category = validated_data.pop('category', None)
+        attrs = validated_data.pop('attrs', None)
+        media_files = self.context['request'].data.get('media_files')
+        validated_data.update(
+            {
+                "user": self.context['request'].user
+            }
+        )
+        instance = super(ProductSerializer, self).update(instance, validated_data)
+        category_obj = get_object_or_404(Category, pk=int(category['id']))
+        instance.category = category_obj
+        if attrs:
+            instance.attrs.clear()
+            for attr in attrs:
+                obj, created = ProductAttribut.objects.get_or_create(product=instance, **attr)
+                obj.product = instance
+                obj.save()
+                instance.attrs.add(obj)
+        if media_files:
+            instance.media.clear()
+            for file_id in media_files:
+                media_obj = get_object_or_404(Media, pk=int(file_id))
+                instance.media.add(media_obj)
+                instance.save()
         instance.save()
         return instance
 
@@ -217,8 +269,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class AttributSerializer(serializers.ModelSerializer):
     values = AttributDetailsSerializer(many=True)
-    category_attrs = CategoryAttributSerializer(many=True)
-    product_attrs = ProductAttributSerializer(many=True)
 
     # title = serializers.SerializerMethodField()
 
@@ -228,9 +278,20 @@ class AttributSerializer(serializers.ModelSerializer):
     #         "ar": instance.title_ar
     #     }
 
+    def create(self, validated_data):
+        values = validated_data.pop('values')
+        instance = super(AttributSerializer, self).create(validated_data)
+        for value in values:
+            obj, created = AttributDetails.objects.get_or_create(attribut=instance, **value)
+            obj.attribut = instance
+            obj.save()
+            instance.values.add(obj)
+            instance.save()
+        return instance
+
     class Meta:
         model = Attribut
-        fields = '__all__'
+        fields = ('id', 'title', 'values')
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -243,18 +304,21 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         product_orders = validated_data.pop('product_orders')
         directed_mozaeda = validated_data.pop('directed_mozaeda', None)
+        validated_data.update({"user": self.context['request'].user})
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
-            serializer = ProductOrderSerializer(data=product_order)
-            serializer.is_valid(raise_exception=True)
-            new_pd = serializer.save()
+            quantity = product_order.get('quantity')
+            validate_product_order(product_order)
+            new_pd = ProductOrder.objects.create(**product_order)
             new_pd.order = instance
             if new_pd.product.category.parent_title == 'mozaeda':
                 new_pd.product.current_price = new_pd.product.current_price + new_pd.product.increase_amount
                 instance.save()
             elif new_pd.product.category.parent_title in ['bazar', 'direct']:
-                new_pd.product.amount = new_pd.product.amount - new_pd.product.quantity
+                new_pd.product.amount = new_pd.product.amount - quantity
                 instance.save()
+            instance.product_orders.add(new_pd)
+            instance.save()
 
         OrderLog.objects.create(order=instance, mozaeda=bool(directed_mozaeda))
         return instance

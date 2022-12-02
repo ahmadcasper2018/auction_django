@@ -58,7 +58,7 @@ class Category(SoftDeleteModel):
     @property
     def parent_title(self):
         if not self.parent:
-            return 'No parents'
+            return self.title
         else:
             return self.parent.title
 
@@ -255,7 +255,7 @@ class OrderLog(TimeStampedModel):
         blank=True,
     )
     order = models.ForeignKey(
-        ProductOrder,
+        Order,
         on_delete=models.SET_NULL,
         related_name="logs",
         null=True,

@@ -52,11 +52,16 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
     def get_queryset(self):
         return super(OrderViewSet, self).get_queryset().filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True)
+        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -84,6 +89,14 @@ class AttributViewSet(viewsets.ModelViewSet):
     queryset = Attribut.objects.all()
     serializer_class = AttributSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+
 
 class MediaViewSet(viewsets.ModelViewSet):
     queryset = Media.objects.all()
@@ -101,8 +114,6 @@ class MediaViewSet(viewsets.ModelViewSet):
         for file in self.request.FILES.getlist('file'):
             Media.objects.create(file=File(file))
         return Response(status=200)
-
-
 
 
 class AttributDetailsViewSet(viewsets.ModelViewSet):

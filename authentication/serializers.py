@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.exceptions import ValidationError
+from drf_extra_fields.fields import Base64ImageField
 
 from location.models import Address, City
 from .models import Phone
@@ -35,6 +36,7 @@ class UserPhonerSerializer(serializers.ModelSerializer):
 class UserCreationSerializer(UserCreateSerializer):
     phones = UserPhonerSerializer(many=True)
     addresses = UserAddressSerializer(many=True)
+    avatar = Base64ImageField(required=False)
 
     def validate(self, attrs):
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
@@ -51,7 +53,7 @@ class UserCreationSerializer(UserCreateSerializer):
         for phone in phones:
             Phone.objects.create(user=instance, **phone)
         for location in addresses:
-            location, create = Address.objects.get_or_create(**location)
+            location, create = Address.objects.get_or_create(user=instance, **location)
             instance.addresses.add(location)
         return instance
 
