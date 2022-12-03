@@ -175,10 +175,13 @@ SIMPLE_JWT = {
 }
 
 DJOSER = {
+    "LOGIN_FIELD": "email",
     'SERIALIZERS': {'user_create': 'authentication.serializers.UserCreationSerializer',
                     'current_user': 'authentication.serializers.UserExtendedSerializer',
                     'user': 'authentication.serializers.UserExtendedSerializer',
                     },
+    "PASSWORD_RESET_CONFIRM_URL": "reset_password/{uid}/{token}",
+    "password_reset_confirm":"reset_password/{uid}/{token}",
 }
 
 AUTHENTICATION_BACKENDS = [

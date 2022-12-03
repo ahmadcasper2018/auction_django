@@ -1,10 +1,10 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import PhoneNumberViewSet
+from .views import ChangePasswordView
 
-router = routers.SimpleRouter()
-router.register(r'', PhoneNumberViewSet)
+# router = routers.SimpleRouter()
+# router.register(r'password-change', ChangePasswordView, basename='password-change')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('password-change/', ChangePasswordView.as_view(), name='password-change')
 ]

@@ -23,4 +23,4 @@ urlpatterns = [
     path('attrs/', include(attrs_router.urls))
 ]
 
-print(router.urls)
+

@@ -1,9 +1,12 @@
-from rest_framework import viewsets
-from .models import Phone
-from .serializers import PhoneNumberSerializer
+from rest_framework import viewsets, generics, status
+from rest_framework.response import Response
+
+from .models import Phone, User
+from .serializers import PhoneNumberSerializer, ChangePasswordSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from rest_framework.permissions import IsAuthenticated
 
 
 class GoogleLoginView(SocialLoginView):
@@ -16,11 +19,30 @@ class GoogleLoginView(SocialLoginView):
 #     client_class = OAuth2Client
 
 
-# Create your views here.
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (IsAuthenticated,)
 
-class PhoneNumberViewSet(viewsets.ModelViewSet):
-    queryset = Phone.objects.all()
-    serializer_class = PhoneNumberSerializer
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
 
-    def get_queryset(self):
-        return super(PhoneNumberViewSet, self).get_queryset().filter(user=self.request.user)
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

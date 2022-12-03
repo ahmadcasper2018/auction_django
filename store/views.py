@@ -39,14 +39,6 @@ class ShippingCompanyViewSet(viewsets.ModelViewSet):
     queryset = ShippingCompany.objects.all()
     serializer_class = ShippingCompanySerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
-
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()

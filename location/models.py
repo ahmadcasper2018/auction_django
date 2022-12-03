@@ -3,7 +3,6 @@ from django.conf import settings
 
 
 # Create your models here.
-#todo secure APIs
 
 class Governorate(models.Model):
     code = models.CharField(max_length=255)
@@ -29,7 +28,8 @@ class City(models.Model):
 class Address(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE,
-                             related_name='addresses')
+                             related_name='addresses',
+                             null=True)
     address = models.CharField(max_length=255)
     city = models.ForeignKey(
         City,

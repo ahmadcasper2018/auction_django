@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
-from location.models import City, Address
+from location.models import City, Address, Governorate
 from .models import (
     Product,
     Category,
@@ -38,9 +38,12 @@ def validate_product_order(data):
         raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
 
-class CompanyAddressSerializer(serializers.Serializer):
-    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
-    address = serializers.CharField(max_length=255)
+class AddressCompanySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Address
+        fields = ('id', 'city', 'address')
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
@@ -98,6 +101,7 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
 
 class AttributDetailsSerializer(serializers.ModelSerializer):
     # value = serializers.SerializerMethodField()
+    id = serializers.IntegerField(required=False)
 
     # def get_value(self, instance):
     #     return {
@@ -289,6 +293,17 @@ class AttributSerializer(serializers.ModelSerializer):
             instance.save()
         return instance
 
+    def update(self, instance, validated_data):
+        values = validated_data.pop('values')
+        instance = super(AttributSerializer, self).update(instance, validated_data)
+        for value in values:
+            obj = get_object_or_404(AttributDetails, pk=int(value['id']))
+            obj.value = value.get('value', obj.value)
+            obj.value_en = value.get('value', obj.value_en)
+            obj.value_ar = value.get('value', obj.value_ar)
+            obj.save()
+        return instance
+
     class Meta:
         model = Attribut
         fields = ('id', 'title', 'values')
@@ -341,9 +356,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ShippingCompanySerializer(serializers.ModelSerializer):
-    orders = OrderSerializer(many=True)
+    orders = OrderSerializer(many=True, read_only=True)
     # name = serializers.SerializerMethodField()
-    address = CompanyAddressSerializer()
+    address = AddressCompanySerializer()
 
     # def get_name(self, instance):
     #     return {
@@ -353,17 +368,26 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         address = validated_data.pop('address')
+        location, created = Address.objects.get_or_create(**address)
+        validated_data.update({"address": location})
         instance = super(ShippingCompanySerializer, self).create(validated_data)
-        location, create = Address.objects.get_or_create(**address)
+        return instance
+
+    def update(self, instance, validated_data):
+        address = validated_data.pop('address')
+        instance.name = validated_data.get('name', instance.name)
+        instance.save()
+        instance.name_en = validated_data.get('name_en', instance.name_en)
+        instance.save()
+        instance.name_ar = validated_data.get('name_ar', instance.name_ar)
+        instance.save()
+        instance.cost = validated_data.get('cost', instance.cost)
+        instance.phone = validated_data.get('phone', instance.phone)
+        location, created = Address.objects.get_or_create(**address)
         instance.address = location
+        instance.save()
         return instance
 
     class Meta:
         model = ShippingCompany
         fields = '__all__'
-
-
-class AddressCompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShippingCompany
-        fields = ('id', 'name', 'phone')

@@ -6,6 +6,7 @@ from drf_extra_fields.fields import Base64ImageField
 from location.models import Address, City
 from .models import Phone
 from store.models import Product
+from .models import User
 
 
 class UserAddressSerializer(serializers.Serializer):
@@ -87,3 +88,9 @@ class PhoneNumberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Phone
         fields = ('id', 'user', 'phone', 'type')
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    model = User
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
