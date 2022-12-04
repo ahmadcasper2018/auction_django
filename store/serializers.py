@@ -375,12 +375,8 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         address = validated_data.pop('address')
-        instance.name = validated_data.get('name', instance.name)
-        instance.save()
         instance.name_en = validated_data.get('name_en', instance.name_en)
-        instance.save()
         instance.name_ar = validated_data.get('name_ar', instance.name_ar)
-        instance.save()
         instance.cost = validated_data.get('cost', instance.cost)
         instance.phone = validated_data.get('phone', instance.phone)
         location, created = Address.objects.get_or_create(**address)
