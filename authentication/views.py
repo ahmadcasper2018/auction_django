@@ -1,5 +1,7 @@
 from rest_framework import viewsets, generics, status
+from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Phone, User
 from .serializers import PhoneNumberSerializer, ChangePasswordSerializer
@@ -46,3 +48,14 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetRequest(APIView):
+    def get(self, request, *args, **kwargs):
+        uid = kwargs.get('uid')
+        token = kwargs.get('token')
+        response = {
+            "uid": uid,
+            "reset token": token
+        }
+        return Response(response, status=200)

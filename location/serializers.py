@@ -11,6 +11,7 @@ from .models import (
 
 class AddressSerializer(serializers.ModelSerializer):
     shipping_companys = AddressCompanySerializer(many=True)
+
     # user = UserAddressSerializer()
 
     class Meta:
@@ -33,9 +34,12 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class GovernorateSerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
+    governorate_title = serializers.SerializerMethodField()
+    title_en = serializers.CharField(write_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    cities = CitySerializer(many=True)
 
-    def get_title(self, instance):
+    def get_governorate_title(self, instance):
         return {
             "en": instance.title_en,
             "ar": instance.title_ar
@@ -43,4 +47,9 @@ class GovernorateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Governorate
-        fields = ('id', 'code', 'title')
+        fields = ('id', 'code', 'governorate_title',
+                  'title_en',
+                  'title_ar',
+                  'cities',
+
+                  )
