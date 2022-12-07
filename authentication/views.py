@@ -4,8 +4,18 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.contrib.auth import get_user_model
+
+from rest_framework import generics, status
+
+from djoser import utils
+
+from djoser.conf import settings
+
+User = get_user_model()
+
 from .models import Phone, User
-from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer
+from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer, UserDetailSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -89,3 +99,22 @@ class PasswordResetRequest(APIView):
             "reset token": token
         }
         return Response(response, status=200)
+
+
+class TokenCreateView(utils.ActionViewMixin, generics.GenericAPIView):
+    """
+    Use this endpoint to obtain user authentication token.
+    """
+
+    serializer_class = settings.SERIALIZERS.token_create
+    permission_classes = settings.PERMISSIONS.token_create
+
+    def _action(self, serializer):
+        token_data = get_tokens_for_user(serializer.user)
+        response = {}
+        extra_data = UserDetailSerializer(serializer.user)
+        response.update({'user': extra_data.data})
+        response.update(token_data)
+        return Response(
+            response, status=status.HTTP_200_OK
+        )

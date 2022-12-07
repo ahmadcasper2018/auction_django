@@ -95,3 +95,19 @@ class ChangePasswordSerializer(serializers.Serializer):
     model = User
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    phones = UserPhonerSerializer(many=True)
+    addresses = UserAddressSerializer(many=True)
+    avatar = Base64ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'avatar',
+                  'gender',
+                  'is_active',
+                  'role',
+                  'products',
+                  'phones',
+                  'addresses')
