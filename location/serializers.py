@@ -22,32 +22,39 @@ class AddressSerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
 
-    def get_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
-
     class Meta:
         model = City
-        fields = ('id', 'title', 'governorate')
+        fields = ('id', 'title_en', 'title_ar', 'governorate')
+
+
+class CityInnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ('id', 'title_en', 'title_ar')
 
 
 class GovernorateSerializer(serializers.ModelSerializer):
-    governorate_title = serializers.SerializerMethodField()
-    title_en = serializers.CharField(write_only=True)
-    title_ar = serializers.CharField(write_only=True)
-    cities = CitySerializer(many=True)
+    # governorate_title = serializers.SerializerMethodField()
+    cities = CityInnerSerializer(many=True)
 
-    def get_governorate_title(self, instance):
-        return {
-            "en": instance.title_en,
-            "ar": instance.title_ar
-        }
+    # def get_governorate_title(self, instance):
+    #     return {
+    #         "en": instance.title_en,
+    #         "ar": instance.title_ar
+    #     }
+    def create(self, validated_data):
+        cities = validated_data.pop('cities')
+        instance = super(GovernorateSerializer, self).create(validated_data)
+        for city in cities:
+            serilizer = CityInnerSerializer(data=city)
+            serilizer.is_valid(raise_exception=True)
+            obj = serilizer.save(governorate=instance)
+            obj.save()
+        return instance
 
     class Meta:
         model = Governorate
-        fields = ('id', 'code', 'governorate_title',
+        fields = ('id', 'code',
                   'title_en',
                   'title_ar',
                   'cities',

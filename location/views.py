@@ -48,7 +48,16 @@ class AddressView(mixins.RetrieveModelMixin,
 
 class GovernorateView(mixins.RetrieveModelMixin,
                       mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
                       mixins.UpdateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Governorate.objects.all()
     serializer_class = GovernorateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)

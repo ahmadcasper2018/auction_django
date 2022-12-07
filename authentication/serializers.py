@@ -2,6 +2,7 @@ from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from location.models import Address, City
 from .models import Phone

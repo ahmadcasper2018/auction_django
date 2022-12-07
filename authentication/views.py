@@ -4,16 +4,42 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Phone, User
-from .serializers import PhoneNumberSerializer, ChangePasswordSerializer
+from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 
 class GoogleLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
+
+
+class UserCreateView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserCreationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        refresh = RefreshToken.for_user(request.user)
+        data.update({'refresh': str(refresh)})
+        data.update({'access': str(refresh.access_token)})
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 # class FaceBookLoginView(SocialLoginView):
