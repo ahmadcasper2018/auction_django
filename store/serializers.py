@@ -121,18 +121,28 @@ class ProductAttributSerializer(serializers.ModelSerializer):
 
 
 class ProductAttributSubSerializer(serializers.ModelSerializer):
-    title_en = serializers.SerializerMethodField(read_only=True)
-    title_ar = serializers.SerializerMethodField(read_only=True)
+    title = serializers.SerializerMethodField(read_only=True)
+    value = serializers.SerializerMethodField(read_only=True)
+    value_ar = serializers.CharField(write_only=True)
+    value_en = serializers.CharField(write_only=True)
 
-    def get_title_en(self, instance):
-        return instance.attribut.title_en
+    def get_value(self, instance):
+        return {
+            "en": instance.value_en,
+            "ar": instance.value_ar
+        }
 
-    def get_title_ar(self, instance):
-        return instance.attribut.title_ar
+    def get_title(self, instance):
+        return {
+            "en": instance.attribut.title_en,
+            "ar": instance.attribut.title_ar
+        }
 
     class Meta:
         model = ProductAttribut
-        fields = ('id', 'attribut', 'value_en','value_ar', 'title_en', 'title_ar')
+        fields = ('id', 'attribut', 'value_en', 'value_ar',
+                  'title',
+                  'value',)
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
