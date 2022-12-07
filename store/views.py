@@ -1,6 +1,7 @@
 from django.core.files import File
 from django.shortcuts import render
 from rest_framework import viewsets, status
+from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 
 from .models import *
@@ -13,6 +14,7 @@ from .serializers import *
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = ()
 
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()

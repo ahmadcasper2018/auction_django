@@ -59,7 +59,7 @@ class CategoryProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'title_en', 'title_ar')
+        fields = ('id', 'title', 'title_en', 'title_ar', 'image')
 
 
 class ProductCategorySerializer(serializers.Serializer):
@@ -85,18 +85,18 @@ class MediaSerializer(serializers.ModelSerializer):
 
 
 class CategoryAttributSerializer(serializers.ModelSerializer):
-    # attribut_title = serializers.SerializerMethodField()
-    # attribut_value = serializers.SerializerMethodField()
-    #
-    # def get_attribut_title(self, instance):
-    #     return instance.attribut.title
-    #
-    # def get_attribut_title(self, instance):
-    #     return instance.attribut.title
+    attribut_title = serializers.SerializerMethodField(read_only=True)
+    attribut_value = serializers.SerializerMethodField(read_only=True)
+
+    def get_attribut_title(self, instance):
+        return instance.attribut.title
+
+    def get_attribut_value(self, instance):
+        return instance.attribut.values.all().values('value')
 
     class Meta:
         model = CategoryAttribute
-        fields = ('id', 'attribut')
+        fields = ('id', 'attribut', 'attribut_title', 'attribut_value')
 
 
 class AttributDetailsSerializer(serializers.ModelSerializer):
