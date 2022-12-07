@@ -10,6 +10,8 @@ class ContactSettings(models.Model):
     gmail = models.CharField(max_length=64, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     about = models.TextField(null=True, blank=True)
+    lang = models.CharField(max_length=64, null=True, blank=True)
+    lat = models.CharField(max_length=64, null=True, blank=True)
 
 
 class KeyWord(models.Model):

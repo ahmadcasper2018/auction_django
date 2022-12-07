@@ -105,9 +105,11 @@ class MediaViewSet(viewsets.ModelViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
+        response = []
         for file in self.request.FILES.getlist('file'):
-            Media.objects.create(file=File(file))
-        return Response(status=200)
+            media_obj = Media.objects.create(file=File(file))
+            response.append(media_obj.pk)
+        return Response(data={"ids": response}, status=200)
 
 
 class AttributDetailsViewSet(viewsets.ModelViewSet):
