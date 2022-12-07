@@ -1,4 +1,5 @@
 from rest_framework import viewsets, generics, status
+from rest_framework.decorators import permission_classes
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +9,7 @@ from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCr
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
@@ -27,6 +28,7 @@ class GoogleLoginView(SocialLoginView):
 
 
 class UserCreateView(generics.CreateAPIView):
+    permission_classes = (AllowAny,)
     queryset = User.objects.all()
     serializer_class = UserCreationSerializer
 
