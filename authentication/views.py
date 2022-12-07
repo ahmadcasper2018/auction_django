@@ -38,10 +38,12 @@ class UserCreateView(generics.CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
+        response = {}
+        response.update({'user': data})
         refresh = RefreshToken.for_user(request.user)
-        data.update({'refresh': str(refresh)})
-        data.update({'access': str(refresh.access_token)})
-        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+        response.update({'refresh': str(refresh)})
+        response.update({'access': str(refresh.access_token)})
+        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
 
 # class FaceBookLoginView(SocialLoginView):
