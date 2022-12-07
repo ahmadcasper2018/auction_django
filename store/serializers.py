@@ -204,6 +204,7 @@ class ProductSerializer(serializers.ModelSerializer):
     product_orders = ProductOrderSerializer(many=True, read_only=True)
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
+    address = AddressCompanySerializer()
     # title = serializers.SerializerMethodField()
     # description = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -223,8 +224,8 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
-
         media_files = self.context['request'].data[0].get('media_files')
+        address = validated_data.pop('address', None)
         validated_data.update(
             {
                 "user": self.context['request'].user
@@ -244,7 +245,13 @@ class ProductSerializer(serializers.ModelSerializer):
                 media_obj = get_object_or_404(Media, pk=int(file_id))
                 instance.media.add(media_obj)
                 instance.save()
-
+        if address:
+            obj = Address.objects.filter(**address).first()
+            if not obj:
+                obj = Address.objects.create(**address)
+                instance.address = obj
+                instance.save()
+        instance.address = obj
         instance.save()
         return instance
 
@@ -252,6 +259,7 @@ class ProductSerializer(serializers.ModelSerializer):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
         media_files = self.context['request'].data.get('media_files')
+        address = validated_data.pop('address', None)
         validated_data.update(
             {
                 "user": self.context['request'].user
@@ -273,6 +281,13 @@ class ProductSerializer(serializers.ModelSerializer):
                 media_obj = get_object_or_404(Media, pk=int(file_id))
                 instance.media.add(media_obj)
                 instance.save()
+        if address:
+            obj = Address.objects.filter(**address).first()
+            if not obj:
+                obj = Address.objects.create(**address)
+                instance.address = obj
+                instance.save()
+        instance.address = obj
         instance.save()
         return instance
 
@@ -287,6 +302,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'media',
             'active',
             'amount',
+            'address',
         )
 
 

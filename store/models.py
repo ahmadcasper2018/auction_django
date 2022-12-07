@@ -95,6 +95,12 @@ class Product(models.Model):
         null=True,
 
     )
+    address = models.OneToOneField(
+        Address,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='product',
+    )
     title = models.CharField(max_length=192)
     description = models.TextField()
     image = models.ImageField(upload_to='images/products/%Y/%m/%d', blank=True, null=True)
