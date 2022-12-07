@@ -5,6 +5,7 @@ from .models import (
     Category,
     Product,
     ShippingCompany,
+    ProductAttribut,
 )
 
 
@@ -33,7 +34,13 @@ class ShippingCompanyTranslationOptions(TranslationOptions):
     required_languages = ('en', 'ar')
 
 
+class ProductAttributTranslationOptions(TranslationOptions):
+    fields = ('value',)
+    required_languages = ('en', 'ar')
+
+
 translator.register(Attribut, AttributTranslationOptions)
 translator.register(AttributDetails, AttributDetailsTranslationOptions)
 translator.register(Product, ProductTranslationOptions)
 translator.register(ShippingCompany, ShippingCompanyTranslationOptions)
+translator.register(ProductAttribut, ProductAttributTranslationOptions)
