@@ -8,7 +8,7 @@ from .models import User, Phone
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email', 'is_active')
-    fields = ['_all__']
+    fields = ['__all__']
 
 
 admin.site.register(User, UserAdmin)
