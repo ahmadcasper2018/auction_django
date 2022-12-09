@@ -232,7 +232,7 @@ class ProductOrder(models.Model):
         return self.product.price * self.quantity
 
     def __str__(self):
-        return f'User {self.order.user} ordered {self.quantity} of {self.product.title}'
+        return f"{self.pk}"
 
 
 class CategoryAttribute(models.Model):
