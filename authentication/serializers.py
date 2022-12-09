@@ -41,6 +41,9 @@ class UserCreationSerializer(UserCreateSerializer):
     addresses = UserAddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
     role = serializers.SerializerMethodField(read_only=True)
+    is_staff = serializers.BooleanField(write_only=True, required=False)
+    is_superuser = serializers.BooleanField(write_only=True, required=False)
+
     def get_role(self, instance):
         return instance.role
 
@@ -50,6 +53,9 @@ class UserCreationSerializer(UserCreateSerializer):
 
         if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
             raise ValidationError('please enter at least one valid address !')
+        if (attrs.get('is_staff') or attrs.get('is_superuser')) and not self.context['request'].user.is_superuser:
+            raise ValidationError({"User type": "You dont have permession to create this type of users !"})
+
         return attrs
 
     def create(self, validated_data):
@@ -67,6 +73,8 @@ class UserCreationSerializer(UserCreateSerializer):
         fields = ('id', 'email', 'username',
                   'password',
                   'avatar',
+                  'is_staff',
+                  'is_superuser',
                   'gender',
                   'role',
                   'phones',
