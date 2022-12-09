@@ -19,9 +19,9 @@ class AttributDetailsTranslationOptions(TranslationOptions):
     required_languages = ('en', 'ar')
 
 
-# class CategoryTranslationOptions(TranslationOptions):
-#     fields = ('title',)
-#     required_languages = ('en', 'ar')
+class CategoryTranslationOptions(TranslationOptions):
+    fields = ('title',)
+    required_languages = ('en', 'ar')
 
 
 class ProductTranslationOptions(TranslationOptions):
@@ -42,5 +42,6 @@ class ProductAttributTranslationOptions(TranslationOptions):
 translator.register(Attribut, AttributTranslationOptions)
 translator.register(AttributDetails, AttributDetailsTranslationOptions)
 translator.register(Product, ProductTranslationOptions)
+translator.register(Category, CategoryTranslationOptions)
 translator.register(ShippingCompany, ShippingCompanyTranslationOptions)
 translator.register(ProductAttribut, ProductAttributTranslationOptions)
