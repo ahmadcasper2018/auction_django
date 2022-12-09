@@ -8,7 +8,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from location.models import Address, City
 from .models import Phone
 from store.models import Product
-from .models import User
+from .models import User, Wallet
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = ('id', 'amount')
 
 
 class UserAddressSerializer(serializers.Serializer):
@@ -40,6 +46,7 @@ class UserCreationSerializer(UserCreateSerializer):
     phones = UserPhonerSerializer(many=True)
     addresses = UserAddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
+    wallet = WalletSerializer(read_only=True)
     role = serializers.SerializerMethodField(read_only=True)
     is_staff = serializers.BooleanField(write_only=True, required=False)
     is_superuser = serializers.BooleanField(write_only=True, required=False)
@@ -67,6 +74,7 @@ class UserCreationSerializer(UserCreateSerializer):
         for location in addresses:
             location, create = Address.objects.get_or_create(user=instance, **location)
             instance.addresses.add(location)
+        Wallet.objects.create(user=instance, amount=0)
         return instance
 
     class Meta(UserCreateSerializer.Meta):
@@ -75,6 +83,7 @@ class UserCreationSerializer(UserCreateSerializer):
                   'avatar',
                   'is_staff',
                   'is_superuser',
+                  'wallet',
                   'gender',
                   'role',
                   'phones',

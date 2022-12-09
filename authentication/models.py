@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from phonenumber_field.modelfields import PhoneNumberField
+from django.conf import settings
 
 
 # Create your models here.
@@ -75,3 +76,15 @@ class Phone(models.Model):
 
     def __str__(self):
         return f'+{self.phone.country_code} {self.phone.national_number}'
+
+
+class Wallet(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wallet',
+    )
+    amount = models.DecimalField(max_digits=8, decimal_places=3)
+
+    def __str__(self):
+        return self.pk
