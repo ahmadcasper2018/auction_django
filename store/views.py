@@ -2,8 +2,9 @@ from django.core.files import File
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-
+from .permessions import ProductPermession
 from .models import *
 from .serializers import *
 
@@ -14,13 +15,22 @@ from .serializers import *
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = ()
+    permission_classes = (ProductPermession,)
 
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
+        cat_id = self.request.query_params.get('cat_id', None)
         category = self.request.query_params.get('category', None)
+        my_products = self.request.query_params.get('my_products', None)
         if category:
-            return queryset.filter(category__title=category)
+            queryset = queryset.filter(category__title=category)
+        if cat_id:
+            queryset = queryset.filter(category__pk=int(cat_id))
+        if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
+            queryset = queryset.filter(status='a')
+        if my_products:
+            queryset = queryset.filter(user=self.request.user)
+
         return queryset
 
     def create(self, request, *args, **kwargs):

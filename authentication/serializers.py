@@ -1,3 +1,4 @@
+from django.db.migrations import serializer
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.exceptions import ValidationError
@@ -39,6 +40,12 @@ class UserCreationSerializer(UserCreateSerializer):
     phones = UserPhonerSerializer(many=True)
     addresses = UserAddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
+    role = serializers.SerializerMethodField(read_only=True)
+    is_staff = serializers.BooleanField(write_only=True,required=False)
+    is_superuser = serializers.BooleanField(write_only=True,required=False)
+
+    def get_role(self, instance):
+        return instance.role
 
     def validate(self, attrs):
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
@@ -62,8 +69,11 @@ class UserCreationSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         fields = ('id', 'email', 'username',
                   'password',
+                  'is_staff',
+                  'is_superuser',
                   'avatar',
                   'gender',
+                  'role',
                   'phones',
                   'addresses')
 
@@ -77,9 +87,9 @@ class UserExtendedSerializer(UserSerializer):
         fields = ('id', 'email', 'username', 'avatar',
                   'gender',
                   'is_active',
-                  'role',
                   'products',
                   'phones',
+                  'role',
                   'addresses')
 
 

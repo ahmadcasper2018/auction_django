@@ -39,17 +39,7 @@ class AttributDetails(models.Model):
 
 
 class Category(SoftDeleteModel):
-    BAZAR = 'bazar'
-    DIRECT = 'direct'
-    MOZAEDA = 'mozaeda'
-
-    CATEGORY_CHOICES = (
-        (BAZAR, 'Bazar'),
-        (DIRECT, 'Direct'),
-        (MOZAEDA, 'Mozaeda'),
-    )
-
-    title = models.CharField(max_length=128, choices=CATEGORY_CHOICES)
+    title = models.CharField(max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='childs', on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
@@ -81,6 +71,14 @@ class Category(SoftDeleteModel):
 
 
 class Product(models.Model):
+    PENDING = 'p'
+    ACCEPTED = 'a'
+    REJECTED = 'r'
+    STATUS_CHOICES = (
+        (PENDING, 'Pending'),
+        (ACCEPTED, 'Accepted'),
+        (REJECTED, 'Rejected'),
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='products',
@@ -124,6 +122,8 @@ class Product(models.Model):
     amount = models.PositiveIntegerField(null=True, blank=True)
     start_time = models.DateTimeField(null=True, blank=False)
     end_time = models.DateTimeField(null=True, blank=False)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
+    reject_message = models.CharField(max_length=512, null=True)
 
     def __str__(self):
         return self.title

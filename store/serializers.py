@@ -177,6 +177,19 @@ class CategorySerializer(serializers.ModelSerializer):
             instance.save()
         return instance
 
+    def update(self, instance, validated_data):
+        category_attrs = validated_data.pop('category_attrs')
+        instance = super(CategorySerializer, self).update(instance, validated_data)
+        if category_attrs:
+            instance.category_attrs.clear()
+            for attr in category_attrs:
+                obj, created = CategoryAttribute.objects.get_or_create(**attr)
+                obj.category = instance
+                obj.save()
+                instance.category_attrs.add(obj)
+            instance.save()
+        return instance
+
     class Meta:
         model = Category
         fields = '__all__'
