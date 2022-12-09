@@ -41,9 +41,6 @@ class UserCreationSerializer(UserCreateSerializer):
     addresses = UserAddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
     role = serializers.SerializerMethodField(read_only=True)
-    is_staff = serializers.BooleanField(write_only=True,required=False)
-    is_superuser = serializers.BooleanField(write_only=True,required=False)
-
     def get_role(self, instance):
         return instance.role
 
@@ -69,8 +66,6 @@ class UserCreationSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         fields = ('id', 'email', 'username',
                   'password',
-                  'is_staff',
-                  'is_superuser',
                   'avatar',
                   'gender',
                   'role',
