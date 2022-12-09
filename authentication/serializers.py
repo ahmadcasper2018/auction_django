@@ -8,7 +8,27 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from location.models import Address, City
 from .models import Phone
 from store.models import Product
-from .models import User, Wallet
+from .models import User, Wallet, Review
+
+
+class AddressSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
+    address = serializers.CharField(max_length=255)
+
+
+class PhoneSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = Phone
+        fields = ('id', 'phone', 'type')
+
+
+class UserReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ('id', 'message', 'product')
 
 
 class WalletSerializer(serializers.ModelSerializer):
@@ -50,6 +70,7 @@ class UserCreationSerializer(UserCreateSerializer):
     role = serializers.SerializerMethodField(read_only=True)
     is_staff = serializers.BooleanField(write_only=True, required=False)
     is_superuser = serializers.BooleanField(write_only=True, required=False)
+    reviews = UserReviewSerializer(many=True, read_only=True)
 
     def get_role(self, instance):
         return instance.role
@@ -84,6 +105,7 @@ class UserCreationSerializer(UserCreateSerializer):
                   'is_staff',
                   'is_superuser',
                   'wallet',
+                  'reviews',
                   'gender',
                   'role',
                   'phones',
@@ -91,15 +113,48 @@ class UserCreationSerializer(UserCreateSerializer):
 
 
 class UserExtendedSerializer(UserSerializer):
-    products = UserProductSerializer(many=True)
-    phones = UserPhonerSerializer(many=True)
-    addresses = UserAddressSerializer(many=True)
+    phones = PhoneSerializer(many=True)
+    addresses = AddressSerializer(many=True)
+    avatar = Base64ImageField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get('phones') or len(attrs.get('phones')) == 0:
+            raise ValidationError('please enter at least one valid phone number !')
+        if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
+            raise ValidationError('please enter at least one valid address !')
+        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_staff')) and not \
+                self.context['request'].user.is_superuser:
+            raise ValidationError({"User type": "You dont have permession to create this type of users !"})
+        return attrs
+
+    def update(self, instance, validated_data):
+        phones = validated_data.pop('phones')
+        addresses = validated_data.pop('addresses')
+        instance.phones.all().delete()
+        instance.addresses.all().delete()
+        for phone in phones:
+            obj, created = Phone.objects.get_or_create(user=instance,**phone)
+            obj.phone = phone.get('phone', obj.phone)
+            obj.type = phone.get('type', obj.phone)
+            obj.save()
+            instance.phones.add(obj)
+            instance.save()
+
+        for location in addresses:
+            obj, created = Address.objects.get_or_create(user=instance,**location)
+            obj.city = location.get('city', obj.city)
+            obj.address = location.get('address', obj.address)
+            obj.save()
+            instance.addresses.add(obj)
+            instance.save()
+        return super(UserExtendedSerializer, self).update(instance, validated_data)
 
     class Meta(UserSerializer.Meta):
         fields = ('id', 'email', 'username', 'avatar',
                   'gender',
                   'is_active',
-                  'products',
+                  'is_superuser',
+                  'is_staff',
                   'phones',
                   'role',
                   'addresses')

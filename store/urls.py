@@ -1,6 +1,7 @@
 from rest_framework import routers
 from django.urls import path, include
 from . import views
+from authentication.views import WalletViewSet
 
 router = routers.SimpleRouter()
 router.register(r'product', views.ProductViewSet, basename='product')
@@ -9,7 +10,7 @@ router.register(r'shipping-company', views.ShippingCompanyViewSet, basename='shi
 router.register(r'order', views.OrderViewSet, basename='order')
 router.register(r'product-order', views.ProductOrderViewSet, basename='product-order')
 router.register(r'attribute', views.AttributViewSet, basename='attribute')
-
+router.register(r'wallet', WalletViewSet, basename='wallet')
 router.register(r'product-media', views.MediaViewSet, basename='product-media')
 
 attrs_router = routers.SimpleRouter()
@@ -22,5 +23,3 @@ urlpatterns = [
     path('', include(router.urls)),
     path('attrs/', include(attrs_router.urls))
 ]
-
-

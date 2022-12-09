@@ -1,7 +1,10 @@
+from random import choices
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from phonenumber_field.modelfields import PhoneNumberField
 from django.conf import settings
+from store.models import Product
 
 
 # Create your models here.
@@ -66,13 +69,25 @@ class User(AbstractUser):
 
 
 class Phone(models.Model):
+    WHATSAPP = 'whatsapp'
+    MOBILE = 'mobile'
+    FAX = 'fax'
+    WORK = 'work'
+
+    PHONE_TYPES = (
+        (WHATSAPP, 'WHATSAPP'),
+        (MOBILE, 'MOBILE'),
+        (FAX, 'FAX'),
+        (WORK, 'WORK')
+
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="phones"
     )
     phone = PhoneNumberField(null=False, blank=False, unique=True)
-    type = models.CharField(max_length=64)
+    type = models.CharField(max_length=16, choices=PHONE_TYPES)
 
     def __str__(self):
         return f'+{self.phone.country_code} {self.phone.national_number}'
@@ -88,3 +103,20 @@ class Wallet(models.Model):
 
     def __str__(self):
         return self.pk
+
+
+class Review(models.Model):
+    message = models.TextField()
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+
+    def __str__(self):
+        return self.message

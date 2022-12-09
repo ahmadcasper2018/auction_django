@@ -1,21 +1,29 @@
+import gender as gender
+from djoser.serializers import UserSerializer
 from rest_framework import viewsets, generics, status
 from rest_framework.decorators import permission_classes
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from rest_framework import mixins
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 
 from rest_framework import generics, status
+from rest_framework import generics
 
 from djoser import utils
 
 from djoser.conf import settings
 
+from store.permessions import WalletPermession
+from .permessions import UserPermession
+
 User = get_user_model()
 
-from .models import Phone, User
-from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer, UserDetailSerializer
+from .models import Phone, User, Wallet
+from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer, UserDetailSerializer, \
+    WalletSerializer, UserExtendedSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -123,3 +131,32 @@ class TokenCreateView(utils.ActionViewMixin, generics.GenericAPIView):
         return Response(
             response, status=status.HTTP_200_OK
         )
+
+
+class WalletViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Wallet.objects.all()
+    serializer_class = WalletSerializer
+    permission_classes = (WalletPermession,)
+
+    def get_queryset(self):
+        return super(WalletViewSet, self).get_queryset().filter(user=self.request.user)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserExtendedSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated, UserPermession)
+
+    def update(self, request, pk=None):
+        obj = User.objects.get(pk=pk)
+        serializer = self.serializer_class(instance=obj, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_202_ACCEPTED, data=serializer.data)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super(UserViewSet, self).get_queryset()
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            qs = qs.filter(pk=user.pk)
+        return qs
