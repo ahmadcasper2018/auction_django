@@ -1,4 +1,3 @@
-import gender as gender
 from djoser.serializers import UserSerializer
 from rest_framework import viewsets, generics, status
 from rest_framework.decorators import permission_classes
