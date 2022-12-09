@@ -178,6 +178,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
     phones = UserPhonerSerializer(many=True)
     addresses = UserAddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
+    reviews = UserReviewSerializer(many=True, read_only=True)
+    wallet = WalletSerializer(read_only=True)
 
     class Meta:
         model = User
@@ -185,6 +187,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
                   'gender',
                   'is_active',
                   'role',
+                  'wallet',
+                  'reviews',
                   'products',
                   'phones',
                   'addresses')
