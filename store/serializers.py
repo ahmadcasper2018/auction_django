@@ -15,6 +15,7 @@ from .models import (
     ProductAttribut,
     Attribut,
     OrderLog,
+    Brand, SliderMedia, Slider
 
 )
 
@@ -38,6 +39,24 @@ def validate_product_order(data):
         raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
 
+class BrandSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField(read_only=True)
+    id = serializers.IntegerField(read_only=True)
+    title_en = serializers.CharField(write_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    image = Base64ImageField(required=False)
+
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
+
+    class Meta:
+        model = Brand
+        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'category')
+
+
 class AddressCompanySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
@@ -47,15 +66,17 @@ class AddressCompanySerializer(serializers.ModelSerializer):
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
-    # title = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField(read_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
     id = serializers.IntegerField()
     image = Base64ImageField(required=False)
 
-    # def get_title(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
 
     class Meta:
         model = Product
@@ -84,6 +105,38 @@ class MediaSerializer(serializers.ModelSerializer):
         fields = ('id', 'file', 'type')
 
 
+class SliderMediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SliderMedia
+        fields = ('id', 'file')
+
+
+class SliderSerializer(serializers.ModelSerializer):
+    media = SliderMediaSerializer(many=True, read_only=True)
+
+    def create(self, validated_data):
+        instance = super(SliderSerializer, self).create(validated_data)
+        media_files = self.context['request'].data['media_files']
+        if media_files:
+            for file_id in media_files:
+                media_obj = get_object_or_404(SliderMedia, pk=int(file_id))
+                instance.media.add(media_obj)
+                instance.save()
+        instance.save()
+        return instance
+
+    class Meta:
+        model = Slider
+        fields = ('id',
+                  'title',
+                  'title_en',
+                  'media',
+                  'title_ar',
+                  'content',
+                  'content_ar',
+                  'content_en')
+
+
 class CategoryAttributSerializer(serializers.ModelSerializer):
     attribut_title = serializers.SerializerMethodField(read_only=True)
     attribut_value = serializers.SerializerMethodField(read_only=True)
@@ -100,14 +153,16 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
 
 
 class AttributDetailsSerializer(serializers.ModelSerializer):
-    # value = serializers.SerializerMethodField()
+    value = serializers.SerializerMethodField(read_only=True)
     id = serializers.IntegerField(required=False)
+    value_ar = serializers.CharField(write_only=True)
+    value_en = serializers.CharField(write_only=True)
 
-    # def get_value(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
+    def get_value(self, instance):
+        return {
+            "en": instance.value_en,
+            "ar": instance.value_ar
+        }
 
     class Meta:
         model = AttributDetails
@@ -146,6 +201,16 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField(read_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
+
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
+
     class Meta:
         model = Category
         fields = '__all__'
@@ -156,14 +221,15 @@ class CategorySerializer(serializers.ModelSerializer):
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
+    title = serializers.SerializerMethodField(read_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
 
-    # title = serializers.SerializerMethodField()
-
-    # def get_title(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
 
     def create(self, validated_data):
         category_attrs = validated_data.pop('category_attrs')
@@ -218,25 +284,32 @@ class ProductSerializer(serializers.ModelSerializer):
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
     address = AddressCompanySerializer()
-    # title = serializers.SerializerMethodField()
+    title = serializers.CharField(required=False)
+    description = serializers.SerializerMethodField(read_only=True)
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
+    description_ar = serializers.CharField(write_only=True)
+    description_en = serializers.CharField(write_only=True)
+
     # description = serializers.SerializerMethodField()
+
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     type = serializers.SerializerMethodField(read_only=True)
 
     def get_type(self, instance):
         return instance.product_type
 
-    # def get_title(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
-    #
-    # def get_description(self, instance):
-    #     return {
-    #         "en": instance.description_en,
-    #         "ar": instance.description_ar
-    #     }
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
+
+    def get_description(self, instance):
+        return {
+            "en": instance.description_en,
+            "ar": instance.description_ar
+        }
 
     def create(self, validated_data):
         category = validated_data.pop('category', None)
@@ -298,6 +371,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 media_obj = get_object_or_404(Media, pk=int(file_id))
                 instance.media.add(media_obj)
                 instance.save()
+        obj = instance.address
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
@@ -315,6 +389,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'current_price',
             'increase_amount',
             'attrs',
+            'description_ar',
+            'description_en',
             'type',
             'product_orders',
             'media',

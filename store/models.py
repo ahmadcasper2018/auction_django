@@ -89,7 +89,7 @@ class Product(models.Model):
         null=True,
 
     )
-    address = models.OneToOneField(
+    address = models.ForeignKey(
         Address,
         on_delete=models.CASCADE,
         null=True,
@@ -301,3 +301,18 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Slider(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+
+
+class SliderMedia(models.Model):
+    file = models.FileField(upload_to='images/slider-media/%Y/%m/%d')
+    slider = models.ForeignKey(
+        Slider,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='media'
+    )

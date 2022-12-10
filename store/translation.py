@@ -6,6 +6,7 @@ from .models import (
     Product,
     ShippingCompany,
     ProductAttribut,
+    Brand, SliderMedia, Slider
 )
 
 
@@ -39,9 +40,21 @@ class ProductAttributTranslationOptions(TranslationOptions):
     required_languages = ('en', 'ar')
 
 
+class BrandTranslationOptions(TranslationOptions):
+    fields = ('title',)
+    required_languages = ('en', 'ar')
+
+
+class SliderTranslationOptions(TranslationOptions):
+    fields = ('title', 'content')
+    required_languages = ('en', 'ar')
+
+
 translator.register(Attribut, AttributTranslationOptions)
 translator.register(AttributDetails, AttributDetailsTranslationOptions)
 translator.register(Product, ProductTranslationOptions)
 translator.register(Category, CategoryTranslationOptions)
 translator.register(ShippingCompany, ShippingCompanyTranslationOptions)
 translator.register(ProductAttribut, ProductAttributTranslationOptions)
+translator.register(Brand, BrandTranslationOptions)
+translator.register(Slider, SliderTranslationOptions)

@@ -4,7 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .permessions import ProductPermession
+from .permessions import ProductPermession, BrandPermession
 from .models import *
 from .serializers import *
 
@@ -122,6 +122,33 @@ class MediaViewSet(viewsets.ModelViewSet):
         return Response(data={"ids": response}, status=200)
 
 
+class SliderMediaViewSet(viewsets.ModelViewSet):
+    queryset = SliderMedia.objects.all()
+    serializer_class = SliderMediaSerializer
+
+    # def get_queryset(self):
+    #     return super(MediaViewSet, self).get_queryset().filter(product__user=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+    def create(self, request, *args, **kwargs):
+        response = []
+        file = self.request.FILES.getlist('file')[0]
+        media_obj = SliderMedia.objects.create(file=File(file))
+        response.append(media_obj.pk)
+        data = dict(request.data)
+        data.pop('file')
+        cleaned_data = {key: value[0] for key, value in data.items()}
+        for key, value in cleaned_data.items():
+            setattr(media_obj, key, value)
+        media_obj.save()
+
+        return Response(data={"ids": response}, status=200)
+
+
 class AttributDetailsViewSet(viewsets.ModelViewSet):
     queryset = AttributDetails.objects.all()
     serializer_class = AttributDetailsSerializer
@@ -135,3 +162,22 @@ class ProductAttributViewSet(viewsets.ModelViewSet):
 class CategoryAttributeViewSet(viewsets.ModelViewSet):
     queryset = CategoryAttribute.objects.all()
     serializer_class = CategoryAttributSerializer
+
+
+class BrandViewSet(viewsets.ModelViewSet):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    permission_classes = (BrandPermession,)
+
+
+class SliderViewSet(viewsets.ModelViewSet):
+    queryset = Slider.objects.all()
+    serializer_class = SliderSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
