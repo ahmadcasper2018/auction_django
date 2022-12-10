@@ -15,20 +15,6 @@ class WishListSerializer(serializers.ModelSerializer):
     objects = serializers.ListField(write_only=True)
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), required=False)
 
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     objs = validated_data.pop('objects')
-    #     response = []
-    #     for obj in objs:
-    #         product = Product.objects.get(pk=obj)
-    #         new_wish = WishList.objects.create(user=user, product=product)
-    #         response.append(
-    #             {'id': new_wish.pk}
-    #         )
-    #         user.wishlist.add(new_wish)
-    #         user.save()
-    #     return response
-
     class Meta:
         model = WishList
         fields = ('id', 'product', 'objects')

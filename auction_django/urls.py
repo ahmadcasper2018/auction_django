@@ -20,22 +20,12 @@ from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
 from allauth.socialaccount.providers.google import views as google_views
 
-from django.views import View
 from authentication.views import PasswordResetRequest, GoogleLoginView
 
 
 def index(request):
     return HttpResponse(status=200)
 
-
-# class RedirectSocial(View):
-#
-#     def get(self, request, *args, **kwargs):
-#         code, state = str(request.GET['code']), str(request.GET['state'])
-#         json_obj = {'code': code, 'state': state}
-#         print(json_obj)
-#         return JsonResponse(json_obj)
-#
 
 urlpatterns = [
     path('admin/', admin.site.urls),

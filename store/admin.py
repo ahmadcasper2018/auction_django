@@ -9,6 +9,7 @@ from .models import (
     Media,
     Order,
     ProductOrder,
+    Brand
 
 )
 
@@ -28,3 +29,4 @@ admin.site.register(Media)
 admin.site.register(Order)
 admin.site.register(ProductOrder)
 admin.site.register(ShippingCompany)
+admin.site.register(Brand)
