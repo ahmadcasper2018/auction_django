@@ -1,33 +1,41 @@
-from djoser.serializers import UserSerializer
-from rest_framework import viewsets, generics, status
-from rest_framework.decorators import permission_classes
-from rest_framework.generics import UpdateAPIView
+from rest_framework import viewsets, status, generics
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import mixins
-from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
-
-from rest_framework import generics, status
-from rest_framework import generics
 
 from djoser import utils
 
 from djoser.conf import settings
 
+from store.models import Product
 from store.permessions import WalletPermession
-from .permessions import UserPermession
+from .permessions import UserPermession, ReviewPermession, WishListPermession
 
-User = get_user_model()
-
-from .models import Phone, User, Wallet
-from .serializers import PhoneNumberSerializer, ChangePasswordSerializer, UserCreationSerializer, UserDetailSerializer, \
-    WalletSerializer, UserExtendedSerializer
+from .models import (
+    Phone,
+    User,
+    Wallet,
+    Review,
+    WishList
+)
+from .serializers import (
+    PhoneNumberSerializer,
+    ChangePasswordSerializer,
+    UserCreationSerializer,
+    UserDetailSerializer,
+    WalletSerializer,
+    UserExtendedSerializer,
+    ReviewSerializer,
+    WishListSerializer
+)
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+
+User = get_user_model()
 
 
 def get_tokens_for_user(user):
@@ -158,4 +166,58 @@ class UserViewSet(viewsets.ModelViewSet):
         qs = super(UserViewSet, self).get_queryset()
         if not (self.request.user.is_staff or self.request.user.is_superuser):
             qs = qs.filter(pk=user.pk)
+        return qs
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
+    permission_classes = (IsAuthenticated, ReviewPermession)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+
+    def get_queryset(self):
+        qs = super(ReviewViewSet, self).get_queryset()
+        if not (self.request.user.is_superuser or self.request.user.is_staff):
+            qs = qs.filter(user=self.request.user)
+        return qs
+
+
+class WishListViewSet(viewsets.ModelViewSet):
+    serializer_class = WishListSerializer
+    queryset = WishList.objects.all()
+    permission_classes = (IsAuthenticated, WishListPermession)
+
+    @action(detail=False, methods=['delete'])
+    def remove_list(self, request):
+        objs = request.data['objects']
+        for obj in objs:
+            WishList.objects.get(pk=obj).delete()
+        return Response(status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        objs = request.data['objects']
+        news_objs = []
+        for obj in objs:
+            product = Product.objects.get(pk=obj)
+            new_wish = WishList.objects.create(user=user, product=product)
+            news_objs.append(
+                new_wish
+            )
+            user.wishlist.add(new_wish)
+            user.save()
+        serializer = self.serializer_class(news_objs, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_queryset(self):
+        qs = super(WishListViewSet, self).get_queryset()
+        if not (self.request.user.is_superuser or self.request.user.is_staff):
+            qs = qs.filter(user=self.request.user)
         return qs

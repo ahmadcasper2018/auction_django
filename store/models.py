@@ -103,19 +103,19 @@ class Product(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to='images/products/%Y/%m/%d', blank=True, null=True)
     price = models.DecimalField(
-        max_digits=6,
+        max_digits=10,
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     min_price = models.DecimalField(
-        max_digits=6,
+        max_digits=10,
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     current_price = models.DecimalField(
-        max_digits=6,
+        max_digits=10,
         decimal_places=3,
     )
     increase_amount = models.DecimalField(
-        max_digits=6,
+        max_digits=10,
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     active = models.BooleanField(default=True)
@@ -124,6 +124,23 @@ class Product(models.Model):
     end_time = models.DateTimeField(null=True, blank=False)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
     reject_message = models.CharField(max_length=512, null=True)
+    new = models.BooleanField(default=False)
+    used = models.BooleanField(default=False)
+    decrease_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        validators=[MinValueValidator(Decimal('0.001'))])
+
+    @property
+    def product_type(self):
+        p_type = self.category
+        while p_type.parent:
+            test = p_type.parent
+            if not test:
+                return p_type.title
+            p_type = p_type.parent
+        return p_type.title
 
     def __str__(self):
         return self.title

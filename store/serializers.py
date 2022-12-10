@@ -221,6 +221,10 @@ class ProductSerializer(serializers.ModelSerializer):
     # title = serializers.SerializerMethodField()
     # description = serializers.SerializerMethodField()
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    type = serializers.SerializerMethodField(read_only=True)
+
+    def get_type(self, instance):
+        return instance.product_type
 
     # def get_title(self, instance):
     #     return {
@@ -311,6 +315,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'current_price',
             'increase_amount',
             'attrs',
+            'type',
             'product_orders',
             'media',
             'active',

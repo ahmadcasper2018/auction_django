@@ -120,3 +120,17 @@ class Review(models.Model):
 
     def __str__(self):
         return self.message
+
+
+class WishList(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wishlist',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='wishlist',
+    )
+

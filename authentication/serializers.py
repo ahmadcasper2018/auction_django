@@ -8,7 +8,44 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from location.models import Address, City
 from .models import Phone
 from store.models import Product
-from .models import User, Wallet, Review
+from .models import User, Wallet, Review, WishList
+
+
+class WishListSerializer(serializers.ModelSerializer):
+    objects = serializers.ListField(write_only=True)
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), required=False)
+
+    # def create(self, validated_data):
+    #     user = self.context['request'].user
+    #     objs = validated_data.pop('objects')
+    #     response = []
+    #     for obj in objs:
+    #         product = Product.objects.get(pk=obj)
+    #         new_wish = WishList.objects.create(user=user, product=product)
+    #         response.append(
+    #             {'id': new_wish.pk}
+    #         )
+    #         user.wishlist.add(new_wish)
+    #         user.save()
+    #     return response
+
+    class Meta:
+        model = WishList
+        fields = ('id', 'product', 'objects')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        validated_data.update(
+            {
+                "user": self.context['request'].user
+            }
+        )
+        return super(ReviewSerializer, self).create(validated_data)
+
+    class Meta:
+        model = Review
+        fields = ('id', 'message', 'product')
 
 
 class AddressSerializer(serializers.Serializer):
@@ -71,6 +108,7 @@ class UserCreationSerializer(UserCreateSerializer):
     is_staff = serializers.BooleanField(write_only=True, required=False)
     is_superuser = serializers.BooleanField(write_only=True, required=False)
     reviews = UserReviewSerializer(many=True, read_only=True)
+    wishlist = WishListSerializer(many=True, read_only=True)
 
     def get_role(self, instance):
         return instance.role
@@ -108,6 +146,7 @@ class UserCreationSerializer(UserCreateSerializer):
                   'reviews',
                   'gender',
                   'role',
+                  'wishlist',
                   'phones',
                   'addresses')
 
@@ -116,6 +155,9 @@ class UserExtendedSerializer(UserSerializer):
     phones = PhoneSerializer(many=True)
     addresses = AddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
+    reviews = UserReviewSerializer(many=True, read_only=True)
+    wishlist = WishListSerializer(many=True, read_only=True)
+    wallet = WalletSerializer(read_only=True)
 
     def validate(self, attrs):
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
@@ -133,7 +175,7 @@ class UserExtendedSerializer(UserSerializer):
         instance.phones.all().delete()
         instance.addresses.all().delete()
         for phone in phones:
-            obj, created = Phone.objects.get_or_create(user=instance,**phone)
+            obj, created = Phone.objects.get_or_create(user=instance, **phone)
             obj.phone = phone.get('phone', obj.phone)
             obj.type = phone.get('type', obj.phone)
             obj.save()
@@ -141,7 +183,7 @@ class UserExtendedSerializer(UserSerializer):
             instance.save()
 
         for location in addresses:
-            obj, created = Address.objects.get_or_create(user=instance,**location)
+            obj, created = Address.objects.get_or_create(user=instance, **location)
             obj.city = location.get('city', obj.city)
             obj.address = location.get('address', obj.address)
             obj.save()
@@ -155,6 +197,9 @@ class UserExtendedSerializer(UserSerializer):
                   'is_active',
                   'is_superuser',
                   'is_staff',
+                  'wallet',
+                  'reviews',
+                  'wishlist',
                   'phones',
                   'role',
                   'addresses')
@@ -180,6 +225,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=False)
     reviews = UserReviewSerializer(many=True, read_only=True)
     wallet = WalletSerializer(read_only=True)
+    wishlist = WishListSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -187,6 +233,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
                   'gender',
                   'is_active',
                   'role',
+                  'wishlist',
                   'wallet',
                   'reviews',
                   'products',
