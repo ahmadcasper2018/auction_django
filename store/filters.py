@@ -16,5 +16,9 @@ class ProductFilter(filters.FilterSet):
                   'status',
                   'used',
                   'new',
+                  'price',
+                  'min_price',
+                  'current_price',
+                  'max_price'
                   'stock',
                   )
