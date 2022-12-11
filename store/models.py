@@ -166,6 +166,14 @@ class Media(models.Model):
         related_name='media',
         null=True
     )
+    attribut = models.ForeignKey(
+        Attribut,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='media',
+    )
+    alt = models.CharField(max_length=32, null=True)
+    value = models.CharField(max_length=64, null=True)
 
     @property
     def type(self):

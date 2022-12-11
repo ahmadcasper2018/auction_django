@@ -11,7 +11,7 @@ router.register(r'shipping-company', views.ShippingCompanyViewSet, basename='shi
 router.register(r'order', views.OrderViewSet, basename='order')
 router.register(r'product-order', views.ProductOrderViewSet, basename='product-order')
 router.register(r'attribute', views.AttributViewSet, basename='attribute')
-router.register(r'wallet', WalletViewSet, basename='wallet')
+
 router.register(r'product-media', views.MediaViewSet, basename='product-media')
 router.register(r'slider-media', views.SliderMediaViewSet, basename='slider-media')
 router.register(r'slider', views.SliderViewSet, basename='slider')
@@ -23,5 +23,5 @@ attrs_router.register(r'detail', views.AttributDetailsViewSet, basename='attrs-d
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('attrs/', include(attrs_router.urls))
+    path('attrs/', include(attrs_router.urls)),
 ]

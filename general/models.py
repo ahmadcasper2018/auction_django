@@ -7,6 +7,8 @@ class ContactSettings(models.Model):
     instagram = models.CharField(max_length=64, null=True, blank=True)
     whatsapp = models.CharField(max_length=64, null=True, blank=True)
     facebook = models.CharField(max_length=64, null=True, blank=True)
+    fax = models.CharField(max_length=64, null=True, blank=True)
+    youtube = models.CharField(max_length=64, null=True, blank=True)
     gmail = models.CharField(max_length=64, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     about = models.TextField(null=True, blank=True)

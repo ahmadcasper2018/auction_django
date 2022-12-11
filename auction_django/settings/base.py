@@ -66,6 +66,7 @@ THIRD_PART_APPS = [
     'allauth.socialaccount.providers.facebook',
     'dj_rest_auth',
     'django_extensions',
+    'django_filters',
 
 ]
 
@@ -165,6 +166,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
@@ -182,7 +184,7 @@ DJOSER = {
                     'user': 'authentication.serializers.UserExtendedSerializer',
                     },
     "PASSWORD_RESET_CONFIRM_URL": "reset_password/{uid}/{token}",
-    "password_reset_confirm":"reset_password/{uid}/{token}",
+    "password_reset_confirm": "reset_password/{uid}/{token}",
 }
 
 AUTHENTICATION_BACKENDS = [

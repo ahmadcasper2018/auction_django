@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
+from authentication.models import WalletLog
+from authentication.serializers import ReviewSerializer, SubUserSerializer
 from location.models import City, Address, Governorate
 from .models import (
     Product,
@@ -102,7 +104,7 @@ class MediaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('id', 'file', 'type')
+        fields = ('id', 'file', 'type', 'attribut', 'alt', 'value')
 
 
 class SliderMediaSerializer(serializers.ModelSerializer):
@@ -284,12 +286,15 @@ class ProductSerializer(serializers.ModelSerializer):
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
     address = AddressCompanySerializer()
-    title = serializers.CharField(required=False)
-    description = serializers.SerializerMethodField(read_only=True)
+    title = serializers.SerializerMethodField(required=False)
+    title_current = serializers.CharField(read_only=True, source='title')
+    description_currnet = serializers.CharField(read_only=True, source='description')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
+    description = serializers.SerializerMethodField(read_only=True)
     description_ar = serializers.CharField(write_only=True)
     description_en = serializers.CharField(write_only=True)
+    reviews = SubUserSerializer(many=True, read_only=True)
 
     # description = serializers.SerializerMethodField()
 
@@ -385,13 +390,18 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'id', 'user', 'category', 'title', 'title_en', 'title_ar', 'description', 'image', 'price', 'min_price',
+            'id', 'user', 'category', 'title_current', 'description', 'image', 'price', 'min_price',
             'current_price',
             'increase_amount',
             'attrs',
             'description_ar',
             'description_en',
             'type',
+            'reviews',
+            'title',
+            'title_ar',
+            'title_en',
+            'description_currnet',
             'product_orders',
             'media',
             'active',
@@ -516,3 +526,5 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingCompany
         fields = '__all__'
+
+

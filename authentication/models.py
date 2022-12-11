@@ -2,6 +2,7 @@ from random import choices
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
+from django_extensions.db.models import TimeStampedModel
 from phonenumber_field.modelfields import PhoneNumberField
 from django.conf import settings
 from store.models import Product
@@ -101,9 +102,6 @@ class Wallet(models.Model):
     )
     amount = models.DecimalField(max_digits=8, decimal_places=3)
 
-    def __str__(self):
-        return self.pk
-
 
 class Review(models.Model):
     message = models.TextField()
@@ -134,3 +132,14 @@ class WishList(models.Model):
         related_name='wishlist',
     )
 
+
+class WalletLog(TimeStampedModel):
+    wallet = models.ForeignKey(
+        Wallet,
+        on_delete=models.SET_NULL,
+        related_name="logs",
+        null=True,
+        blank=True,
+    )
+    deposite = models.CharField(max_length=16, null=True)
+    withdraw = models.CharField(max_length=16, null=True)

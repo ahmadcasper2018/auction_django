@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
+from rest_framework.generics import RetrieveAPIView, ListAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
@@ -17,7 +18,7 @@ from .models import (
     User,
     Wallet,
     Review,
-    WishList
+    WishList, WalletLog
 )
 from .serializers import (
     PhoneNumberSerializer,
@@ -50,30 +51,6 @@ def get_tokens_for_user(user):
 class GoogleLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
-
-
-class UserCreateView(generics.CreateAPIView):
-    permission_classes = (AllowAny,)
-    queryset = User.objects.all()
-    serializer_class = UserCreationSerializer
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        data = serializer.data
-        response = {}
-        response.update({'user': data})
-        refresh = RefreshToken.for_user(request.user)
-        response.update({'refresh': str(refresh)})
-        response.update({'access': str(refresh.access_token)})
-        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
 
 # class FaceBookLoginView(SocialLoginView):
@@ -140,7 +117,7 @@ class TokenCreateView(utils.ActionViewMixin, generics.GenericAPIView):
         )
 
 
-class WalletViewSet(viewsets.ReadOnlyModelViewSet):
+class WalletViewSet(viewsets.ModelViewSet):
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
     permission_classes = (WalletPermession,)
@@ -152,14 +129,27 @@ class WalletViewSet(viewsets.ReadOnlyModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserExtendedSerializer
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated, UserPermession)
+    permission_classes = (UserPermession,)
 
-    def update(self, request, pk=None):
-        obj = User.objects.get(pk=pk)
-        serializer = self.serializer_class(instance=obj, data=request.data, partial=True, context={'request': request})
+    def create(self, request, *args, **kwargs):
+        serializer = UserCreationSerializer(data=request.data, context={"request": self.request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(status=status.HTTP_202_ACCEPTED, data=serializer.data)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        response = {}
+        response.update({'user': data})
+        refresh = RefreshToken.for_user(request.user)
+        response.update({'refresh': str(refresh)})
+        response.update({'access': str(refresh.access_token)})
+        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
+
+    # def update(self, request, pk=None):
+    #     obj = User.objects.get(pk=pk)
+    #     serializer = self.serializer_class(instance=obj, data=request.data, partial=True, context={'request': request})
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(status=status.HTTP_202_ACCEPTED, data=serializer.data)
 
     def get_queryset(self):
         user = self.request.user
@@ -221,3 +211,8 @@ class WishListViewSet(viewsets.ModelViewSet):
         if not (self.request.user.is_superuser or self.request.user.is_staff):
             qs = qs.filter(user=self.request.user)
         return qs
+
+
+class WalletLogView(viewsets.ModelViewSet):
+    queryset = WalletLog.objects.all()
+    serializer_class = WalletSerializer

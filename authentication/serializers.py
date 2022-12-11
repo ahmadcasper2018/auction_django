@@ -3,12 +3,27 @@ from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from location.models import Address, City
-from .models import Phone
+from .models import Phone, WalletLog
 from store.models import Product
 from .models import User, Wallet, Review, WishList
+
+
+class UserPhonerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Phone
+        fields = ('phone', 'type')
+
+
+class ReviewSubUserSerializer(serializers.ModelSerializer):
+    phones = UserPhonerSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'phones')
 
 
 class WishListSerializer(serializers.ModelSerializer):
@@ -35,13 +50,13 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class AddressSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
     city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
     address = serializers.CharField(max_length=255)
 
 
 class PhoneSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
 
     class Meta:
         model = Phone
@@ -54,10 +69,32 @@ class UserReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'message', 'product')
 
 
+class WalletLogSerializer(serializers.ModelSerializer):
+    user = ReviewSubUserSerializer(read_only=True)
+
+    class Meta:
+        model = WalletLog
+        fields = ('id', 'user', 'created', 'withdraw', 'deposite')
+
+
 class WalletSerializer(serializers.ModelSerializer):
+    logs = WalletLogSerializer(read_only=True, many=True)
+
+    def update(self, instance, validated_data):
+        old_amount = instance.amount
+        new_amount = validated_data.get('amount')
+        instance = super(WalletSerializer, self).update(instance, validated_data)
+        if new_amount >= old_amount:
+            withdraw = new_amount - old_amount
+            WalletLog.objects.create(wallet=instance, withdraw=str(withdraw))
+        else:
+            deposit = old_amount - new_amount
+            WalletLog.objects.create(wallet=instance, deposite=str(deposit))
+        return instance
+
     class Meta:
         model = Wallet
-        fields = ('id', 'amount')
+        fields = ('id', 'amount', 'logs')
 
 
 class UserAddressSerializer(serializers.Serializer):
@@ -79,12 +116,6 @@ class UserProductSerializer(serializers.ModelSerializer):
         fields = ('id', 'title')
 
 
-class UserPhonerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Phone
-        fields = ('phone', 'type')
-
-
 class UserCreationSerializer(UserCreateSerializer):
     phones = UserPhonerSerializer(many=True)
     addresses = UserAddressSerializer(many=True)
@@ -93,6 +124,7 @@ class UserCreationSerializer(UserCreateSerializer):
     role = serializers.SerializerMethodField(read_only=True)
     is_staff = serializers.BooleanField(write_only=True, required=False)
     is_superuser = serializers.BooleanField(write_only=True, required=False)
+    is_active = serializers.BooleanField(write_only=True, required=False)
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
 
@@ -105,7 +137,8 @@ class UserCreationSerializer(UserCreateSerializer):
 
         if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
             raise ValidationError('please enter at least one valid address !')
-        if (attrs.get('is_staff') or attrs.get('is_superuser')) and not self.context['request'].user.is_superuser:
+        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_active')) and \
+                not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
 
         return attrs
@@ -130,6 +163,7 @@ class UserCreationSerializer(UserCreateSerializer):
                   'is_superuser',
                   'wallet',
                   'reviews',
+                  'is_active',
                   'gender',
                   'role',
                   'wishlist',
@@ -144,13 +178,16 @@ class UserExtendedSerializer(UserSerializer):
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
     wallet = WalletSerializer(read_only=True)
+    is_staff = serializers.BooleanField(write_only=True, required=False)
+    is_superuser = serializers.BooleanField(write_only=True, required=False)
+    is_active = serializers.BooleanField(write_only=True, required=False)
 
     def validate(self, attrs):
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
             raise ValidationError('please enter at least one valid phone number !')
         if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
             raise ValidationError('please enter at least one valid address !')
-        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_staff')) and not \
+        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_active')) and not \
                 self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
         return attrs
@@ -187,6 +224,7 @@ class UserExtendedSerializer(UserSerializer):
                   'reviews',
                   'wishlist',
                   'phones',
+                  'is_active',
                   'role',
                   'addresses')
 
@@ -225,3 +263,11 @@ class UserDetailSerializer(serializers.ModelSerializer):
                   'products',
                   'phones',
                   'addresses')
+
+
+class SubUserSerializer(ModelSerializer):
+    user = ReviewSubUserSerializer(read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ('id', 'message', 'product', 'user')

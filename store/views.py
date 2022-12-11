@@ -1,13 +1,12 @@
 from django.core.files import File
-from django.shortcuts import render
 from rest_framework import viewsets, status
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from .filters import ProductFilter
 from .permessions import ProductPermession, BrandPermession
 from .models import *
 from .serializers import *
-
+from django_filters import rest_framework as filters
 
 # Create your views here.
 
@@ -16,6 +15,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (ProductPermession,)
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = ProductFilter
 
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
@@ -116,9 +117,15 @@ class MediaViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         response = []
-        for file in self.request.FILES.getlist('file'):
-            media_obj = Media.objects.create(file=File(file))
-            response.append(media_obj.pk)
+        file = self.request.FILES.getlist('file')[0]
+        media_obj = Media.objects.create(file=File(file))
+        response.append(media_obj.pk)
+        data = dict(request.data)
+        data.pop('file')
+        cleaned_data = {key: value[0] for key, value in data.items()}
+        for key, value in cleaned_data.items():
+            setattr(media_obj, key, value)
+        media_obj.save()
         return Response(data={"ids": response}, status=200)
 
 
