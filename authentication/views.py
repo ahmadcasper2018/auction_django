@@ -140,8 +140,9 @@ class UserViewSet(viewsets.ModelViewSet):
         response = {}
         response.update({'user': data})
         refresh = RefreshToken.for_user(request.user)
-        response.update({'refresh': str(refresh)})
-        response.update({'access': str(refresh.access_token)})
+        if self.request.user and not (self.request.user.is_superuser or self.request.user.is_staff):
+            response.update({'refresh': str(refresh)})
+            response.update({'access': str(refresh.access_token)})
         return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
     # def update(self, request, pk=None):
