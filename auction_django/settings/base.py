@@ -210,8 +210,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '643689312750-t2o06qlovpc911he0fmut7c37ahppj09.a
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://wabel.incareg.com/",
-    "http://wabel.incareg.com/",
+    "http://wabel.incareg.com",
+    "http://wabel.incareg.com",
     "http://localhost:4200",
     "http://127.0.0.1:4200",
     "https://localhost:4200",
