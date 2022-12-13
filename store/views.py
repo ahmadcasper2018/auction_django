@@ -21,10 +21,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
         cat_id = self.request.query_params.get('cat_id', None)
-        category = self.request.query_params.get('category', None)
+        brand = self.request.query_params.get('brand', None)
         my_products = self.request.query_params.get('my_products', None)
-        if category:
-            queryset = queryset.filter(category__title=category)
+        if brand:
+            queryset = queryset.filter(category__brand=brand)
         if cat_id:
             queryset = queryset.filter(category__pk=int(cat_id))
         if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
