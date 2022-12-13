@@ -67,6 +67,7 @@ THIRD_PART_APPS = [
     'dj_rest_auth',
     'django_extensions',
     'django_filters',
+    'corsheaders',
 
 ]
 
@@ -83,6 +84,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PART_APPS + LOCAL_APPS
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -205,3 +208,13 @@ REST_USE_JWT = True
 LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '643689312750-t2o06qlovpc911he0fmut7c37ahppj09.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://wabel.incareg.com/",
+    "http://wabel.incareg.com/",
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "https://localhost:4200",
+    "https://127.0.0.1:4200",
+
+]
