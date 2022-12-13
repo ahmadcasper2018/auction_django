@@ -211,7 +211,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
 CORS_ALLOWED_ORIGINS = [
     "http://wabel.incareg.com",
-    "http://wabel.incareg.com",
+    "https://wabel.incareg.com",
     "http://localhost:4200",
     "http://127.0.0.1:4200",
     "https://localhost:4200",
@@ -226,4 +226,16 @@ CORS_ALLOW_METHODS = [
     "PATCH",
     "POST",
     "PUT",
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
