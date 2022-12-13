@@ -218,3 +218,12 @@ CORS_ALLOWED_ORIGINS = [
     "https://127.0.0.1:4200",
 
 ]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
