@@ -30,20 +30,21 @@ from drf_extra_fields.fields import Base64ImageField
 def validate_product_order(data):
     product = data.get("product")
     quantity = data.get("quantity")
-    category_title = product.category.parent_title
+    category_title = product.product_type
     # directed_mozaeda = data.get('directed_mozaeda')
-    if category_title in ['direct', 'bazar']:
+    if category_title in ['direct', 'shop']:
         if not quantity:
             raise ValidationError(f"please enter the amount of products you want to purchase")
         elif quantity > product.amount:
             raise ValidationError(f"you can't order more then {product.amount} of this product")
-    elif category_title != 'mozaeda':
+    elif category_title != 'auction':
         raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
 
 class BrandSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(read_only=True)
     id = serializers.IntegerField(read_only=True)
+    title_current = serializers.CharField(read_only=True, source='title')
     title_en = serializers.CharField(write_only=True)
     title_ar = serializers.CharField(write_only=True)
     image = Base64ImageField(required=False)
@@ -56,7 +57,7 @@ class BrandSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Brand
-        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'category')
+        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'category', 'title_current')
 
 
 class AddressCompanySerializer(serializers.ModelSerializer):
@@ -68,7 +69,7 @@ class AddressCompanySerializer(serializers.ModelSerializer):
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField(read_only=True)
+    title_currnet = serializers.CharField(read_only=True, source='title')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
     id = serializers.IntegerField()
@@ -82,18 +83,12 @@ class CategoryProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'title_en', 'title_ar', 'image')
+        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'title_currnet')
 
 
 class ProductCategorySerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    title = serializers.CharField(max_length=255)
-    # title = serializers.SerializerMethodField()
-    # def get_title(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
+    brands = BrandSerializer(many=True, read_only=True)
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -223,7 +218,8 @@ class CategorySerializer(serializers.ModelSerializer):
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
-    title = serializers.SerializerMethodField(read_only=True)
+    title_currnet = serializers.CharField(read_only=True, source='title')
+    title = serializers.SerializerMethodField(required=False)
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
 
@@ -453,7 +449,11 @@ class OrderSerializer(serializers.ModelSerializer):
     product_orders = ProductOrderSerializer(many=True)
 
     def get_total_cost(self, instance):
-        return sum([elment.price for elment in instance.product_orders.all()])
+        raw_cost = sum([elment.price for elment in instance.product_orders.all()])
+        company_tax = (instance.shipping_company.tax * raw_cost) / 100
+        cost_with_tax = raw_cost + company_tax
+        final_cost = cost_with_tax + instance.shipping_company.cost
+        return final_cost
 
     def create(self, validated_data):
         product_orders = validated_data.pop('product_orders')
@@ -465,11 +465,13 @@ class OrderSerializer(serializers.ModelSerializer):
             validate_product_order(product_order)
             new_pd = ProductOrder.objects.create(**product_order)
             new_pd.order = instance
-            if new_pd.product.category.parent_title == 'mozaeda':
+            if new_pd.product.product_type == 'auction':
                 new_pd.product.current_price = new_pd.product.current_price + new_pd.product.increase_amount
+                new_pd.product.save()
                 instance.save()
-            elif new_pd.product.category.parent_title in ['bazar', 'direct']:
+            elif new_pd.product.product_type in ['bazar', 'shop']:
                 new_pd.product.amount = new_pd.product.amount - quantity
+                new_pd.product.save()
                 instance.save()
             instance.product_orders.add(new_pd)
             instance.save()
@@ -496,14 +498,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class ShippingCompanySerializer(serializers.ModelSerializer):
     orders = OrderSerializer(many=True, read_only=True)
-    # name = serializers.SerializerMethodField()
+    name_current = serializers.CharField(read_only=True, source='title')
     address = AddressCompanySerializer()
+    name = serializers.SerializerMethodField(required=False)
 
-    # def get_name(self, instance):
-    #     return {
-    #         "en": instance.name_en,
-    #         "ar": instance.name_ar
-    #     }
+    def get_name(self, instance):
+        return {
+            "en": instance.name_en,
+            "ar": instance.name_ar
+        }
 
     def create(self, validated_data):
         address = validated_data.pop('address')
@@ -526,5 +529,3 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingCompany
         fields = '__all__'
-
-

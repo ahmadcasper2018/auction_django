@@ -188,8 +188,9 @@ class ShippingCompany(models.Model):
         related_name='shipping_companys',
         on_delete=models.CASCADE
     )
-    cost = models.DecimalField(max_digits=6, decimal_places=3)
+    cost = models.DecimalField(max_digits=6, decimal_places=3, default=0)
     phone = models.CharField(max_length=32)
+    tax = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 
     def __str__(self):
         return self.name
