@@ -161,14 +161,16 @@ class UserViewSet(viewsets.ModelViewSet):
         normal = qs.none()
         if user_types:
             types = user_types.split(',')
-            if 'superuser' in types:
-                superusers = qs.filter(is_superuser=True)
-            if 'admin' in types:
-                admins = qs.filter(is_staff=True)
+            if user.is_superuser:
+                if 'superuser' in types:
+                    superusers = qs.filter(is_superuser=True)
+                if 'admin' in types:
+                    admins = qs.filter(is_staff=True)
             if 'normal' in types:
                 normal = qs.filter(is_staff=False, is_superuser=False)
             qs = superusers | admins | normal
-
+        if user.is_staff:
+            qs = qs.filter(is_superuser=False, is_staff=False)
         if not (self.request.user.is_staff or self.request.user.is_superuser):
             qs = qs.filter(pk=user.pk)
         return qs
