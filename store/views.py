@@ -14,7 +14,7 @@ from django_filters import rest_framework as filters
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    # permission_classes = (ProductPermession,)
+    permission_classes = (ProductPermession,)
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ProductFilter
 
@@ -29,8 +29,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category__brands__in=brands)
         if cat_id:
             queryset = queryset.filter(category__pk=int(cat_id))
-        if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
-            queryset = queryset.filter(status='a')
+        # if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
+        #     queryset = queryset.filter(status='a')
         if my_products:
             queryset = queryset.filter(user=self.request.user)
 
