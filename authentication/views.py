@@ -154,7 +154,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        user_types = self.request.query_params.get('user_types', None)
         qs = super(UserViewSet, self).get_queryset()
+        superusers = qs.none()
+        admins = qs.none()
+        normal = qs.none()
+        if user_types:
+            types = user_types.split(',')
+            if 'superuser' in types:
+                superusers = qs.filter(is_superuser=True)
+            if 'admin' in types:
+                admins = qs.filter(is_staff=True)
+            if 'normal' in types:
+                normal = qs.filter(is_staff=False, is_superuser=False)
+            qs = superusers | admins | normal
+
         if not (self.request.user.is_staff or self.request.user.is_superuser):
             qs = qs.filter(pk=user.pk)
         return qs
