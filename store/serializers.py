@@ -1,8 +1,9 @@
+from django.db.models import Max
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-
-from authentication.models import WalletLog
+from django.core.mail import send_mail
+from django.conf import settings
 from authentication.serializers import ReviewSerializer, SubUserSerializer
 from location.models import City, Address, Governorate
 from .models import (
@@ -17,7 +18,7 @@ from .models import (
     ProductAttribut,
     Attribut,
     OrderLog,
-    Brand, SliderMedia, Slider
+    Brand, SliderMedia, Slider, AuctionOrder,
 
 )
 
@@ -37,7 +38,7 @@ def validate_product_order(data):
             raise ValidationError(f"please enter the amount of products you want to purchase")
         elif quantity > product.amount:
             raise ValidationError(f"you can't order more then {product.amount} of this product")
-    elif category_title != 'auction':
+    else:
         raise ValidationError(f"there no order logic for this product as it's not from the three main categories")
 
 
@@ -99,7 +100,7 @@ class MediaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('id', 'file', 'type', 'attribut', 'alt', 'value')
+        fields = ('id', 'file', 'type', 'attributes', 'alt', 'value')
 
 
 class SliderMediaSerializer(serializers.ModelSerializer):
@@ -291,6 +292,7 @@ class ProductSerializer(serializers.ModelSerializer):
     description_ar = serializers.CharField(write_only=True)
     description_en = serializers.CharField(write_only=True)
     reviews = SubUserSerializer(many=True, read_only=True)
+    discount = serializers.DecimalField(max_digits=10, decimal_places=3, required=False)
 
     # description = serializers.SerializerMethodField()
 
@@ -315,7 +317,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
-        media_files = self.context['request'].data[0].get('media_files')
+        media_files = self.context['request'].data.get('media_files')
         address = validated_data.pop('address', None)
         validated_data.update(
             {
@@ -396,9 +398,13 @@ class ProductSerializer(serializers.ModelSerializer):
             'reviews',
             'title',
             'title_ar',
+            'new',
+            'used',
+            'sale',
             'title_en',
             'description_currnet',
             'product_orders',
+            'discount',
             'media',
             'active',
             'amount',
@@ -444,6 +450,76 @@ class AttributSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'values')
 
 
+# class AuctionOrderRequestSerializer(serializers.ModelSerializer):
+#     id = serializers.IntegerField(required=False)
+#     current_payment = serializers.DecimalField(read_only=True, decimal_places=3, max_digits=10)
+#     directed = serializers.BooleanField(required=False)
+#
+#     class Meta:
+#         model = AuctionOrder
+#         fields = "__all__"
+
+
+class AuctionOrderSerializer(serializers.ModelSerializer):
+    current_payment = serializers.DecimalField(read_only=True, decimal_places=3, max_digits=10)
+    directed = serializers.BooleanField(required=False)
+    auction_order = serializers.PrimaryKeyRelatedField(
+        queryset=Order.objects.all(),
+        required=False
+    )
+    status = serializers.CharField(read_only=True)
+    increase_user = serializers.DecimalField(max_digits=10, decimal_places=3, write_only=True)
+
+    def create(self, validated_data):
+        request = self.context['request']
+
+        validated_data.update({"user": request.user})
+        shipping_company = request.data.get('shipping_company', None)
+        address = request.data.get('address', None)
+        direct = validated_data.get('directed', False)
+        shipping_company = get_object_or_404(ShippingCompany, pk=shipping_company)
+        address = get_object_or_404(Address, pk=address)
+        auction_product = validated_data.get('auction_product')
+        max_payment = auction_product.current_price
+        new_order = Order.objects.create(
+            user=request.user,
+            shipping_company=shipping_company,
+            address=address,
+            status=Order.PENDING)
+        instance = AuctionOrder.objects.create(
+            order_product=new_order,
+            auction_product=auction_product,
+            direct=direct,
+            current_payment=max_payment
+        )
+
+        # new_order.auction_orders.add(instance)
+        increase_amount = request.data.get('increase_amount', None)
+        increase_user = validated_data.get('increase_user', None)
+        if increase_amount:
+            instance.current_payment += instance.auction_product.increase_amount
+            auction_product.current_price += auction_product.increase_amount
+        elif increase_user:
+            instance.current_payment += increase_user
+            auction_product.current_price += increase_user
+
+        elif direct and request.user.wallet.amount >= instance.auction_product.price:
+            send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
+                      ['ahmadc@gmail.com'])
+
+        instance.save()
+        new_order.auction_orders.add(instance)
+        auction_product.auction_orders.add(instance)
+        new_order.save()
+        auction_product.save()
+        # OrderLog.objects.create(order=instance, mozaeda=False)
+        return instance
+
+    class Meta:
+        model = AuctionOrder
+        fields = '__all__'
+
+
 class OrderSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField(read_only=True)
     product_orders = ProductOrderSerializer(many=True)
@@ -457,7 +533,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         product_orders = validated_data.pop('product_orders')
-        directed_mozaeda = validated_data.pop('directed_mozaeda', None)
         validated_data.update({"user": self.context['request'].user})
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
@@ -465,18 +540,14 @@ class OrderSerializer(serializers.ModelSerializer):
             validate_product_order(product_order)
             new_pd = ProductOrder.objects.create(**product_order)
             new_pd.order = instance
-            if new_pd.product.product_type == 'auction':
-                new_pd.product.current_price = new_pd.product.current_price + new_pd.product.increase_amount
-                new_pd.product.save()
-                instance.save()
-            elif new_pd.product.product_type in ['bazar', 'shop']:
+            if new_pd.product.product_type in ['bazar', 'shop']:
                 new_pd.product.amount = new_pd.product.amount - quantity
                 new_pd.product.save()
                 instance.save()
             instance.product_orders.add(new_pd)
             instance.save()
 
-        OrderLog.objects.create(order=instance, mozaeda=bool(directed_mozaeda))
+        OrderLog.objects.create(order=instance, mozaeda=False)
         return instance
 
     def update(self, instance, validated_data):

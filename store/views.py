@@ -1,5 +1,6 @@
 from django.core.files import File
 from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .filters import ProductFilter
@@ -7,6 +8,7 @@ from .permessions import ProductPermession, BrandPermession
 from .models import *
 from .serializers import *
 from django_filters import rest_framework as filters
+
 
 # Create your views here.
 
@@ -37,10 +39,24 @@ class ProductViewSet(viewsets.ModelViewSet):
         return queryset
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            products = serializer.save()
+            instance = products
+            old_price = instance.price
+            sale = request.data.get('sale', False)
+            if sale:
+                discount = instance.discount
+                discounted_value = (instance.price * discount) / 100
+                instance.price = instance.price - discounted_value
+                instance.save()
+            if old_price == instance.price:
+                old_price = None
+            response = serializer.data
+            response.update(
+                {'old_price': old_price}
+            )
+            return Response(response, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
@@ -90,6 +106,26 @@ class ProductOrderViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+
+
+class AuctionOrderRequestViewSet(viewsets.ModelViewSet):
+    queryset = AuctionOrder.objects.all()
+    serializer_class = AuctionOrderSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+
+    def get_queryset(self):
+        # if self.request.user.is_anonymous:
+        #     return AuctionOrder.objects.none()
+        return super(AuctionOrderRequestViewSet, self).get_queryset()
+        # .filter(auction_product__user=self.request.user)
 
 
 class AttributViewSet(viewsets.ModelViewSet):

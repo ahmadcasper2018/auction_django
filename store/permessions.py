@@ -3,8 +3,13 @@ from rest_framework.permissions import BasePermission
 
 class ProductPermession(BasePermission):
 
+    def has_permission(self, request, view):
+        return True
+
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.user
+        if request.method in ['PATCH', 'PUT']:
+            return request.user == obj.user
+        return True
 
 
 class WalletPermession(BasePermission):

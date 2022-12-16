@@ -19,6 +19,7 @@ from .models import (
 
 class CityView(mixins.RetrieveModelMixin,
                mixins.ListModelMixin,
+               mixins.CreateModelMixin,
                mixins.UpdateModelMixin,
                viewsets.GenericViewSet):
     queryset = City.objects.all()
@@ -34,17 +35,6 @@ class AddressView(mixins.RetrieveModelMixin,
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
-
-    def get_queryset(self):
-        return super(AddressView, self).get_queryset().filter(user=self.request.user)
-
 
 class GovernorateView(mixins.RetrieveModelMixin,
                       mixins.ListModelMixin,
@@ -53,11 +43,3 @@ class GovernorateView(mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet):
     queryset = Governorate.objects.all()
     serializer_class = GovernorateSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)

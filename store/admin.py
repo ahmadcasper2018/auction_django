@@ -9,7 +9,7 @@ from .models import (
     Media,
     Order,
     ProductOrder,
-    Brand, SliderMedia, Slider
+    Brand, SliderMedia, Slider, AuctionOrder
 
 )
 
@@ -31,4 +31,5 @@ admin.site.register(ProductOrder)
 admin.site.register(ShippingCompany)
 admin.site.register(Brand)
 admin.site.register(SliderMedia)
+admin.site.register(AuctionOrder)
 admin.site.register(Slider)

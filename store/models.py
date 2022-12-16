@@ -128,6 +128,8 @@ class Product(models.Model):
         null=True,
         validators=[MinValueValidator(Decimal('0.001'))])
     stock = models.PositiveIntegerField(default=1)
+    sale = models.BooleanField(default=False)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     @property
     def product_type(self):
@@ -166,11 +168,10 @@ class Media(models.Model):
         related_name='media',
         null=True
     )
-    attribut = models.ForeignKey(
+    attributes = models.ManyToManyField(
         Attribut,
         null=True,
-        on_delete=models.SET_NULL,
-        related_name='media',
+        related_name='medias',
     )
     alt = models.CharField(max_length=32, null=True)
     value = models.CharField(max_length=64, null=True)
@@ -325,3 +326,23 @@ class SliderMedia(models.Model):
         null=True,
         related_name='media'
     )
+
+
+class AuctionOrder(models.Model):
+    auction_product = models.ForeignKey(
+        Product,
+        related_name='auction_orders',
+        on_delete=models.SET_NULL,
+        null=True,
+
+    )
+
+    order_product = models.ForeignKey(
+        Order,
+        related_name='auction_orders',
+        on_delete=models.SET_NULL,
+        null=True,
+
+    )
+    direct = models.BooleanField(default=False)
+    current_payment = models.DecimalField(max_digits=10, decimal_places=3, default=0)

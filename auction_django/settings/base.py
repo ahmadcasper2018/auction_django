@@ -239,3 +239,10 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+DEFAULT_FROM_EMAIL = "ahmadsy88@gmail.com"
+EMAIL_HOST = "mailhog"
+EMAIL_PORT = 1025
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+EMAIL_USE_TLS = False
