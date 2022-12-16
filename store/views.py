@@ -35,7 +35,7 @@ def find_similar_products(product: Product):
     for prod in Product.objects.exclude(pk=product.pk):
         product_values = flatten_values(prod)
         similarity = measure_similarity(current_values, product_values)
-        if similarity > 0.0 and count_added < 10:
+        if similarity > 80.0 and count_added < 10:
             count_added += 1
             response.append(prod)
     products = Product.objects.all().filter(price__lt=max_price, price__gt=min_price)
