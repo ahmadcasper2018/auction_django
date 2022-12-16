@@ -2,6 +2,7 @@ import random
 
 from django.core.files import File
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -239,9 +240,16 @@ class SliderMediaViewSet(viewsets.ModelViewSet):
         return Response(data={"ids": response}, status=200)
 
 
-class AttributDetailsViewSet(viewsets.ModelViewSet):
+class AttributDetailsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AttributDetails.objects.all()
-    serializer_class = AttributDetailsSerializer
+    serializer_class = AbstractAttributDetailsSerializer
+
+    @action(detail=False, methods=['get'])
+    def get_list(self, request):
+        objs = request.data['objects']
+        queryset = self.queryset.filter(pk__in=objs)
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 class ProductAttributViewSet(viewsets.ModelViewSet):

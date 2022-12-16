@@ -167,6 +167,24 @@ class AttributDetailsSerializer(serializers.ModelSerializer):
         fields = ('id', 'value', 'value_en', 'value_ar')
 
 
+class AbstractAttributDetailsSerializer(serializers.ModelSerializer):
+    value = serializers.SerializerMethodField(read_only=True)
+    id = serializers.IntegerField(required=False)
+    value_current = serializers.CharField(read_only=True, source='value')
+    value_ar = serializers.CharField(write_only=True)
+    value_en = serializers.CharField(write_only=True)
+
+    def get_value(self, instance):
+        return {
+            "en": instance.value_en,
+            "ar": instance.value_ar
+        }
+
+    class Meta:
+        model = AttributDetails
+        fields = ('id', 'value', 'value_en', 'value_ar', 'value_current', 'attribut')
+
+
 class ProductAttributSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductAttribut
