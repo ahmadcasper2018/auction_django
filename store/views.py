@@ -1,3 +1,5 @@
+import random
+
 from django.core.files import File
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
@@ -38,6 +40,9 @@ def find_similar_products(product: Product):
             response.append(prod)
     products = Product.objects.all().filter(price__lt=max_price, price__gt=min_price)
     response.extend(products)
+    if len(response) > 10:
+        response = response[:10]
+    random.shuffle(response)
     return response
 
 
