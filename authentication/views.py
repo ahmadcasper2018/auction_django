@@ -110,6 +110,7 @@ class TokenCreateView(utils.ActionViewMixin, generics.GenericAPIView):
         token_data = get_tokens_for_user(serializer.user)
         response = {}
         extra_data = UserDetailSerializer(serializer.user)
+        response.update({'id': serializer.user.id})
         response.update({'user': extra_data.data})
         response.update(token_data)
         return Response(
@@ -138,6 +139,7 @@ class UserViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
         response = {}
+        response.update({'id': data.get('id')})
         response.update({'user': data})
         refresh = RefreshToken.for_user(request.user)
         if self.request.user and not (self.request.user.is_superuser or self.request.user.is_staff):

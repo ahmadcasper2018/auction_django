@@ -13,6 +13,34 @@ from django_filters import rest_framework as filters
 # Create your views here.
 
 
+def measure_similarity(list1, list2):
+    return len(set(list1) & set(list2)) / float(len(set(list1) | set(list2))) * 100
+
+
+def flatten_values(product: Product):
+    raw_values = [list(i.values()) for i in product.tags]
+    last_values = [j for sub in raw_values for j in sub]
+    return last_values
+
+
+def find_similar_products(product: Product):
+    response = []
+    count_added = 0
+    percent = (product.price * 2) / 100
+    min_price = product.price - percent
+    max_price = product.price + percent
+    current_values = flatten_values(product)
+    for prod in Product.objects.exclude(pk=product.pk):
+        product_values = flatten_values(prod)
+        similarity = measure_similarity(current_values, product_values)
+        if similarity > 0.0 and count_added < 10:
+            count_added += 1
+            response.append(prod)
+    products = Product.objects.all().filter(price__lt=max_price, price__gt=min_price)
+    response.extend(products)
+    return response
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -37,6 +65,18 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=self.request.user)
 
         return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        similar_products = find_similar_products(instance)
+        serializer = self.get_serializer(instance)
+        similar = self.get_serializer(similar_products, many=True)
+
+        data = serializer.data
+        data.update(
+            {"similar_products": similar.data}
+        )
+        return Response(data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})

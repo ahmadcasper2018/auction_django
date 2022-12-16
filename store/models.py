@@ -144,6 +144,14 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def tags(self):
+        attrs = self.attrs.all()
+        if not attrs:
+            return []
+        else:
+            return [atr.values for atr in attrs]
+
 
 class ProductAttribut(models.Model):
     value = models.CharField(max_length=128)
@@ -158,6 +166,13 @@ class ProductAttribut(models.Model):
         related_name='product_attrs',
         on_delete=models.CASCADE,
     )
+
+    @property
+    def values(self):
+        return {
+            'en': self.value_en,
+            'ar': self.value_ar
+        }
 
 
 class Media(models.Model):
