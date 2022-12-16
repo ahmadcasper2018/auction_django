@@ -559,7 +559,7 @@ class OrderSerializer(serializers.ModelSerializer):
         product_orders = validated_data.pop('product_orders')
         instance = super(OrderSerializer, self).update(instance, validated_data)
         for product_order in product_orders:
-            item = ProductOrder.objects.get(id=product_order.pop('id'))
+            item = get_object_or_404(ProductOrder, pk=product_order.pop('id'))
             item.order = product_order.get('order', item.order)
             item.product = product_order.get('product', item.product)
             item.attribut = product_order.get('attribut', item.attribut)

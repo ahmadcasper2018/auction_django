@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
-from rest_framework.generics import RetrieveAPIView, ListAPIView, UpdateAPIView
+from rest_framework.generics import RetrieveAPIView, ListAPIView, UpdateAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
@@ -215,7 +215,7 @@ class WishListViewSet(viewsets.ModelViewSet):
         objs = request.data['objects']
         news_objs = []
         for obj in objs:
-            product = Product.objects.get(pk=obj)
+            product = get_object_or_404(Product, pk=obj)
             new_wish = WishList.objects.create(user=user, product=product)
             news_objs.append(
                 new_wish
