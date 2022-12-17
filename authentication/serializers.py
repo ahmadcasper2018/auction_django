@@ -1,3 +1,5 @@
+from random import choices
+
 from django.db.migrations import serializer
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
@@ -122,23 +124,26 @@ class UserCreationSerializer(UserCreateSerializer):
     avatar = Base64ImageField(required=False)
     wallet = WalletSerializer(read_only=True)
     role = serializers.SerializerMethodField(read_only=True)
-    is_staff = serializers.BooleanField(write_only=True, required=False)
-    is_superuser = serializers.BooleanField(write_only=True, required=False)
     is_active = serializers.BooleanField(write_only=True, required=False)
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
+    user_role = serializers.CharField(max_length=10, write_only=True, required=True)
 
     def get_role(self, instance):
         return instance.role
 
     def validate(self, attrs):
+        required_role = attrs.get('user_role')
+        if required_role not in ['admin', 'superuser', 'normal']:
+            raise ValidationError('please enter a valid user type to create !')
+
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
             raise ValidationError('please enter at least one valid phone number !')
 
         if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
             raise ValidationError('please enter at least one valid address !')
-        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_active')) and \
-                not self.context['request'].user.is_superuser:
+        if (required_role in ['admin', 'superuser'] or attrs.get('is_active')) \
+                and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
 
         return attrs
@@ -146,6 +151,20 @@ class UserCreationSerializer(UserCreateSerializer):
     def create(self, validated_data):
         phones = validated_data.pop('phones')
         addresses = validated_data.pop('addresses')
+        user_role = validated_data.pop('user_role', 'normal')
+        is_superuser = False
+        is_staff = False
+        if user_role == 'superuser':
+            is_superuser = True
+            is_staff = True
+        elif user_role == 'admin':
+            is_staff = True
+        validated_data.update(
+            {
+                'is_staff': is_staff,
+                'is_superuser': is_superuser
+            }
+        )
         instance = super(UserCreationSerializer, self).create(validated_data)
         for phone in phones:
             Phone.objects.create(user=instance, **phone)
@@ -153,14 +172,14 @@ class UserCreationSerializer(UserCreateSerializer):
             location, create = Address.objects.get_or_create(user=instance, **location)
             instance.addresses.add(location)
         Wallet.objects.create(user=instance, amount=0)
+        instance.save()
         return instance
 
     class Meta(UserCreateSerializer.Meta):
         fields = ('id', 'email', 'username',
                   'password',
                   'avatar',
-                  'is_staff',
-                  'is_superuser',
+                  'user_role',
                   'wallet',
                   'reviews',
                   'is_active',
