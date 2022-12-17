@@ -249,7 +249,7 @@ class CategorySerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        category_attrs = validated_data.pop('category_attrs')
+        category_attrs = validated_data.pop('category_attrs', None)
         instance = super(CategorySerializer, self).create(validated_data)
         if category_attrs:
             for attr in category_attrs:
