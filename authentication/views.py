@@ -171,7 +171,7 @@ class UserViewSet(viewsets.ModelViewSet):
             if 'normal' in types:
                 normal = qs.filter(is_staff=False, is_superuser=False)
             qs = superusers | admins | normal
-        if user.is_staff:
+        if user.is_staff and not user.is_superuser:
             qs = qs.filter(is_superuser=False, is_staff=False)
         if not (self.request.user.is_staff or self.request.user.is_superuser):
             qs = qs.filter(pk=user.pk)
