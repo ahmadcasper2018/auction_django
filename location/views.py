@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from .serializers import (
     CitySerializer,
@@ -24,6 +25,7 @@ class CityView(mixins.RetrieveModelMixin,
                viewsets.GenericViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class AddressView(mixins.RetrieveModelMixin,
@@ -34,6 +36,7 @@ class AddressView(mixins.RetrieveModelMixin,
                   ):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class GovernorateView(mixins.RetrieveModelMixin,
@@ -43,3 +46,4 @@ class GovernorateView(mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet):
     queryset = Governorate.objects.all()
     serializer_class = GovernorateSerializer
+    permission_classes = (IsAuthenticated,)
