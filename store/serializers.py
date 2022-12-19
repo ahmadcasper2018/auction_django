@@ -707,6 +707,7 @@ class PageSerializer(serializers.ModelSerializer):
                   'slider_content',
                   'about_current',
                   'about_en',
+                  'page_type',
                   'image',
                   'about',
                   'about_ar')

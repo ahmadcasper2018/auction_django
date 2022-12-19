@@ -338,7 +338,7 @@ class PageViewSet(viewsets.ModelViewSet):
             data = {'pages': serializer.data}
         else:
             serializer = self.get_serializer(queryset)
-            data = {'id': serializer.data['id'], 'page': serializer.data}
+            data = {'page_type': serializer.data['page_type'], 'id': serializer.data['id'], 'page': serializer.data}
         conatct = ContactSettings.objects.first()
         contact_serializer = ContactSettingsSerializer(conatct)
 
