@@ -12,8 +12,6 @@ from .managers import CategoryManager
 from location.models import Address
 
 
-# Create your models here.
-
 class Logo(models.Model):
     file = models.FileField(upload_to='images/logo/')
 
@@ -61,9 +59,9 @@ class AttributDetails(models.Model):
 
 
 class Category(SoftDeleteModel):
-    AUCTION = 'auction'
-    SHOP = 'shop'
-    BAZAR = 'bazar'
+    AUCTION = 'auctions'
+    SHOP = 'shops'
+    BAZAR = 'bazaar'
 
     CODE_TYPES = (
         (AUCTION, 'Auction'),

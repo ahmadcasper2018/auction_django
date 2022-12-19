@@ -4,8 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
-from authentication.serializers import ReviewSerializer, SubUserSerializer
-from location.models import City, Address, Governorate
+from authentication.serializers import SubUserSerializer
+from location.models import Address
 from .models import (
     Product,
     Category,
@@ -530,16 +530,6 @@ class AttributSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attribut
         fields = ('id', 'title', 'values')
-
-
-# class AuctionOrderRequestSerializer(serializers.ModelSerializer):
-#     id = serializers.IntegerField(required=False)
-#     current_payment = serializers.DecimalField(read_only=True, decimal_places=3, max_digits=10)
-#     directed = serializers.BooleanField(required=False)
-#
-#     class Meta:
-#         model = AuctionOrder
-#         fields = "__all__"
 
 
 class AuctionOrderSerializer(serializers.ModelSerializer):

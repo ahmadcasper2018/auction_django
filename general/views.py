@@ -1,11 +1,13 @@
-from django.shortcuts import render
 from rest_framework import viewsets, status, mixins
-# Create your views here.
 from rest_framework.response import Response
 
 from general.models import Question, KeyWord, ContactSettings
-from general.serializers import QuestionSerializer, KeywordSerializer, ContactSettingsSerializer
-from .permessions import IsStaff, SettingsAccress
+from general.serializers import (
+    QuestionSerializer,
+    KeywordSerializer,
+    ContactSettingsSerializer
+)
+from .permessions import SettingsAccress
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -26,7 +28,7 @@ class KeyWordViewSet(viewsets.ModelViewSet):
     queryset = KeyWord.objects.all()
     serializer_class = KeywordSerializer
 
-    # permission_classes = (IsStaff,)
+    permission_classes = (SettingsAccress,)
 
 
 class ContactSettingsViewSet(mixins.RetrieveModelMixin,
@@ -35,6 +37,3 @@ class ContactSettingsViewSet(mixins.RetrieveModelMixin,
     queryset = ContactSettings.objects.all()
     serializer_class = ContactSettingsSerializer
     permission_classes = (SettingsAccress,)
-
-
-
