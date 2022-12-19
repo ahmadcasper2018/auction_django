@@ -1,7 +1,6 @@
 import os
 from decimal import Decimal
 
-
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.conf import settings
@@ -22,8 +21,8 @@ class Logo(models.Model):
 class Page(models.Model):
     HOME = 'home'
     AUCTION = 'auction'
-    SHOP = 'shop'
-    BAZAR = 'bazar'
+    SHOP = 'shops'
+    BAZAR = 'bazaar'
     SLIDER_TYPES = (
         (AUCTION, 'Auction'),
         (SHOP, 'Shop'),
@@ -31,7 +30,8 @@ class Page(models.Model):
         (HOME, 'Home'),
     )
     page_type = models.CharField(max_length=10, choices=SLIDER_TYPES, default=SHOP)
-    about = models.TextField()
+    about = models.CharField(max_length=512)
+    image = models.ImageField(upload_to='images/page/%Y/%m/%d', blank=True, null=True)
 
 
 class AttributValue(models.Model):

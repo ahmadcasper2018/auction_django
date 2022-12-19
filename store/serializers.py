@@ -689,7 +689,24 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
 
 class PageSerializer(serializers.ModelSerializer):
     slider_content = SliderSerializer(read_only=True, many=True, source='sliders')
+    about = serializers.SerializerMethodField()
+    about_current = serializers.CharField(read_only=True, source='about')
+    about_en = serializers.CharField(write_only=True)
+    about_ar = serializers.CharField(write_only=True)
+    image = Base64ImageField(required=False)
+
+    def get_about(self, instance):
+        return {
+            'en': instance.about_en,
+            'ar': instance.about_ar,
+        }
 
     class Meta:
         model = Page
-        fields = "__all__"
+        fields = ('id',
+                  'slider_content',
+                  'about_current',
+                  'about_en',
+                  'image',
+                  'about',
+                  'about_ar')

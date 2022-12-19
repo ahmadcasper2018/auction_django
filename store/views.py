@@ -2,7 +2,7 @@ import random
 
 from django.core.files import File
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -325,18 +325,23 @@ class PageViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        page_type = self.request.query_params.get('page_type',None)
+        data = {}
+        page_type = self.request.query_params.get('page_type', None)
         if page_type:
-            queryset = queryset.filter(page_type=page_type)
+            queryset = queryset.filter(page_type=page_type).first()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
+        if not page_type:
+            serializer = self.get_serializer(queryset, many=True)
+            data = {'pages': serializer.data}
+        else:
+            serializer = self.get_serializer(queryset)
+            data = {'id': serializer.data['id'], 'page': serializer.data}
         conatct = ContactSettings.objects.first()
         contact_serializer = ContactSettingsSerializer(conatct)
-        data = {'pages': serializer.data}
+
         data.update({
             'contact_settings': contact_serializer.data
         })
