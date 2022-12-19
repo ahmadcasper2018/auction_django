@@ -128,6 +128,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+    def get_queryset(self):
+        qs = super(CategoryViewSet, self).get_queryset()
+        code = self.request.query_params.get('code', None)
+        if code:
+            qs = qs.filter(code=code)
+        return qs
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if not (instance.code is None):
