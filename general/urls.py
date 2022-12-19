@@ -5,6 +5,8 @@ from . import views
 router = routers.SimpleRouter()
 router.register(r'question', views.QuestionViewSet)
 router.register(r'keyword', views.KeyWordViewSet)
+router.register(r'settings', views.ContactSettingsViewSet)
+
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
 ]

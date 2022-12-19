@@ -18,7 +18,7 @@ from .models import (
     ProductAttribut,
     Attribut,
     OrderLog,
-    Brand, SliderMedia, Slider, AuctionOrder,
+    Brand, SliderMedia, Slider, AuctionOrder, AttributValue, Page, ProductViewers,
 
 )
 
@@ -26,6 +26,21 @@ from drf_extra_fields.fields import Base64ImageField
 
 
 # from authentication.serializers import UserProductSerializer
+class AttributeValueSerializer(serializers.ModelSerializer):
+    value = serializers.SerializerMethodField()
+    value_current = serializers.CharField(read_only=True, source='value')
+    value_en = serializers.CharField(write_only=True)
+    value_ar = serializers.CharField(write_only=True)
+
+    def get_value(self, instance):
+        return {
+            'en': instance.value_en,
+            'ar': instance.value_ar
+        }
+
+    class Meta:
+        model = AttributValue
+        fields = ('id', 'value', 'value_ar', 'value_en', 'value_current',)
 
 
 def validate_product_order(data):
@@ -75,6 +90,7 @@ class CategoryProductSerializer(serializers.ModelSerializer):
     title_en = serializers.CharField(write_only=True)
     id = serializers.IntegerField()
     image = Base64ImageField(required=False)
+    title = serializers.SerializerMethodField()
 
     def get_title(self, instance):
         return {
@@ -103,6 +119,12 @@ class MediaSerializer(serializers.ModelSerializer):
         fields = ('id', 'file', 'type', 'attributes', 'alt', 'value')
 
 
+class LogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Media
+        fields = ('id', 'file')
+
+
 class SliderMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = SliderMedia
@@ -110,16 +132,35 @@ class SliderMediaSerializer(serializers.ModelSerializer):
 
 
 class SliderSerializer(serializers.ModelSerializer):
-    media = SliderMediaSerializer(many=True, read_only=True)
+    media = SliderMediaSerializer(source='slider_media', read_only=True)
+    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
+    title = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    description_currnet = serializers.CharField(read_only=True, source='description')
+    description_ar = serializers.CharField(write_only=True)
+    description_en = serializers.CharField(write_only=True)
+
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
+
+    def get_description(self, instance):
+        return {
+            "en": instance.description_en,
+            "ar": instance.description_ar
+        }
 
     def create(self, validated_data):
         instance = super(SliderSerializer, self).create(validated_data)
-        media_files = self.context['request'].data['media_files']
-        if media_files:
-            for file_id in media_files:
-                media_obj = get_object_or_404(SliderMedia, pk=int(file_id))
-                instance.media.add(media_obj)
-                instance.save()
+        media_file = self.context['request'].data['media_file']
+        if media_file:
+            media_obj = get_object_or_404(SliderMedia, pk=media_file)
+            instance.slider_media = media_obj
+            instance.save()
         instance.save()
         return instance
 
@@ -127,12 +168,17 @@ class SliderSerializer(serializers.ModelSerializer):
         model = Slider
         fields = ('id',
                   'title',
-                  'title_en',
                   'media',
+                  'slider_media',
+                  'title_en',
+                  'slider_media',
+                  'title_currnet',
+                  'page',
+                  'description_currnet',
                   'title_ar',
-                  'content',
-                  'content_ar',
-                  'content_en')
+                  'description',
+                  'description_ar',
+                  'description_en')
 
 
 class CategoryAttributSerializer(serializers.ModelSerializer):
@@ -193,15 +239,7 @@ class ProductAttributSerializer(serializers.ModelSerializer):
 
 class ProductAttributSubSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(read_only=True)
-    value = serializers.SerializerMethodField(read_only=True)
-    value_ar = serializers.CharField(write_only=True)
-    value_en = serializers.CharField(write_only=True)
-
-    def get_value(self, instance):
-        return {
-            "en": instance.value_en,
-            "ar": instance.value_ar
-        }
+    values = AttributeValueSerializer(many=True, read_only=True)
 
     def get_title(self, instance):
         return {
@@ -211,9 +249,9 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductAttribut
-        fields = ('id', 'attribut', 'value_en', 'value_ar',
+        fields = ('id', 'attribut',
                   'title',
-                  'value',)
+                  'values',)
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
@@ -261,7 +299,7 @@ class CategorySerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        category_attrs = validated_data.pop('category_attrs')
+        category_attrs = validated_data.pop('category_attrs', None)
         instance = super(CategorySerializer, self).update(instance, validated_data)
         if category_attrs:
             instance.category_attrs.clear()
@@ -296,7 +334,7 @@ class ProductOrderSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
     category = ProductCategorySerializer()
-    attrs = ProductAttributSubSerializer(many=True, required=False)
+    attrs = ProductAttributSubSerializer(many=True, required=False, read_only=True)
     product_orders = ProductOrderSerializer(many=True, read_only=True)
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
@@ -311,10 +349,10 @@ class ProductSerializer(serializers.ModelSerializer):
     description_en = serializers.CharField(write_only=True)
     reviews = SubUserSerializer(many=True, read_only=True)
     discount = serializers.DecimalField(max_digits=10, decimal_places=3, required=False)
-    tags = serializers.SerializerMethodField()
+    # tags = serializers.SerializerMethodField()
 
-    def get_tags(self, instance):
-        return instance.tags
+    # def get_tags(self, instance):
+    #     return instance.tags
 
     # description = serializers.SerializerMethodField()
 
@@ -338,7 +376,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category = validated_data.pop('category', None)
-        attrs = validated_data.pop('attrs', None)
+        attrs = self.context['request'].data.get('attrs', None)
         media_files = self.context['request'].data.get('media_files')
         address = validated_data.pop('address', None)
         validated_data.update(
@@ -351,10 +389,18 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.category = category_obj
         if attrs:
             for attr in attrs:
-                obj, created = ProductAttribut.objects.get_or_create(product=instance, **attr)
-                obj.product = instance
-                obj.save()
-                instance.attrs.add(obj)
+                attribut_id = attr.get('attribute')
+                attribute = get_object_or_404(Attribut, pk=attribut_id)
+                values = attr.get('values')
+                new_product_attribute = ProductAttribut.objects.create(
+                    attribut=attribute,
+                    product=instance
+                )
+                values_obs = AttributValue.objects.filter(pk__in=values)
+                for value in values_obs:
+                    new_product_attribute.values.add(value)
+                new_product_attribute.save()
+
         if media_files:
             for file_id in media_files:
                 media_obj = get_object_or_404(Media, pk=int(file_id))
@@ -368,6 +414,9 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.save()
         instance.address = obj
         instance.save()
+        ProductViewers.objects.create(
+            product=instance
+        )
         return instance
 
     def update(self, instance, validated_data):
@@ -421,7 +470,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'title',
             'title_ar',
             'new',
-            'tags',
+
             'used',
             'sale',
             'title_en',
@@ -491,22 +540,18 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         required=False
     )
     status = serializers.CharField(read_only=True)
-    increase_user = serializers.DecimalField(max_digits=10, decimal_places=3, write_only=True)
+    increase_user = serializers.DecimalField(max_digits=10, decimal_places=3, write_only=True, required=False)
 
     def create(self, validated_data):
         request = self.context['request']
-
         validated_data.update({"user": request.user})
-        shipping_company = request.data.get('shipping_company', None)
         address = request.data.get('address', None)
         direct = validated_data.get('directed', False)
-        shipping_company = get_object_or_404(ShippingCompany, pk=shipping_company)
         address = get_object_or_404(Address, pk=address)
         auction_product = validated_data.get('auction_product')
         max_payment = auction_product.current_price
         new_order = Order.objects.create(
             user=request.user,
-            shipping_company=shipping_company,
             address=address,
             status=Order.PENDING)
         instance = AuctionOrder.objects.create(
@@ -520,16 +565,23 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         increase_amount = request.data.get('increase_amount', None)
         increase_user = validated_data.get('increase_user', None)
         if increase_amount:
-            instance.current_payment += instance.auction_product.increase_amount
-            auction_product.current_price += auction_product.increase_amount
+            new_value = max_payment + auction_product.increase_amount
+            if request.user.wallet.amount >= new_value:
+                instance.current_payment = new_value
+                auction_product.current_price += auction_product.increase_amount
         elif increase_user:
-            instance.current_payment += increase_user
-            auction_product.current_price += increase_user
-
+            new_value = max_payment + increase_user
+            if request.user.wallet.amount >= new_value:
+                instance.current_payment = new_value
+                auction_product.current_price += increase_user
         elif direct and request.user.wallet.amount >= instance.auction_product.price:
             send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
                       ['ahmadc@gmail.com'])
 
+        message = f"User {request.user.username} wants to make a direct purchase for your product"
+
+        send_mail('New Direct payemnt request', message, settings.EMAIL_HOST_USER,
+                  ['ahmadc@gmail.com'])
         instance.save()
         new_order.auction_orders.add(instance)
         auction_product.auction_orders.add(instance)
@@ -623,3 +675,11 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingCompany
         fields = '__all__'
+
+
+class PageSerializer(serializers.ModelSerializer):
+    slider_content = SliderSerializer(read_only=True, many=True, source='sliders')
+
+    class Meta:
+        model = Page
+        fields = "__all__"

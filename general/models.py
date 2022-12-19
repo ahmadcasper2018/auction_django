@@ -1,7 +1,9 @@
 from django.db import models
 
-
 # Create your models here.
+from store.models import Slider
+
+
 class ContactSettings(models.Model):
     phone = models.CharField(max_length=64, null=True, blank=True)
     instagram = models.CharField(max_length=64, null=True, blank=True)

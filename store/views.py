@@ -6,6 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from general.models import ContactSettings
+from general.permessions import SettingsAccress
+from general.serializers import ContactSettingsSerializer
 from .filters import ProductFilter
 from .permessions import ProductPermession, BrandPermession
 from .models import *
@@ -14,6 +17,16 @@ from django_filters import rest_framework as filters
 
 
 # Create your views here.
+
+def approve_request(request, pk):
+    auction = get_object_or_404(AuctionOrder, pk=pk)
+    product = auction.auction_product
+    product.active = False
+    product.save()
+    client = auction.order_product.user
+    send_mail('Request status', f"you direct payment request for {product.title} was approved",
+              settings.EMAIL_HOST_USER,
+              [client.email])
 
 
 def measure_similarity(list1, list2):
@@ -76,14 +89,17 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        similar_products = find_similar_products(instance)
+        instance.views.viewers += 1
+        instance.views.save()
+        # similar_products = find_similar_products(instance)
         serializer = self.get_serializer(instance)
-        similar = self.get_serializer(similar_products, many=True)
+
+        # similar = self.get_serializer(similar_products, many=True)
 
         data = serializer.data
-        data.update(
-            {"similar_products": similar.data}
-        )
+        # data.update(
+        #     {"similar_products": similar.data}
+        # )
         return Response(data)
 
     def create(self, request, *args, **kwargs):
@@ -281,3 +297,76 @@ class SliderViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+
+
+class ProductValuesViewset(viewsets.ModelViewSet):
+    queryset = AttributValue.objects.all()
+    serializer_class = AttributeValueSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class PageViewSet(viewsets.ModelViewSet):
+    queryset = Page.objects.all()
+    serializer_class = PageSerializer
+    permission_classes = (SettingsAccress,)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        conatct = ContactSettings.objects.first()
+        contact_serializer = ContactSettingsSerializer(conatct)
+        data = {'pages': serializer.data}
+        data.update({
+            'contact_settings': contact_serializer.data
+        })
+        return Response(data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        page_type = instance.page_type
+        products = Product.objects.all().order_by('-views__viewers')
+        popular = products
+        if len(popular) > 20:
+            popular = popular[:20]
+        if page_type != Page.HOME:
+            products = products.filter(category__title=page_type)
+        new_products = products.filter(new=True)
+        used_products = products.filter(user=True)
+        if len(new_products) > 12:
+            new_products = new_products[:12]
+        if len(used_products) > 12:
+            used_products = used_products[:12]
+        new_serializer = ProductSerializer(new_products, many=True)
+        used_serializer = ProductSerializer(used_products, many=True)
+        popular_serializer = ProductSerializer(popular, many=True)
+        logo = Logo.objects.last()
+        conatct = ContactSettings.objects.first()
+        contact_serializer = ContactSettingsSerializer(conatct)
+        data = {'page': serializer.data}
+        if logo:
+            serializer  = LogoSerializer(logo)
+            data.update(
+                {
+                    'logo': serializer.data
+                }
+            )
+        data.update({
+            'contact_settings': contact_serializer.data,
+            "new_products": new_serializer.data,
+            "used_products": used_serializer.data,
+            "popular_products": popular_serializer.data,
+
+        })
+        return Response(data)
+
+
+class LogoViewSet(viewsets.ModelViewSet):
+    queryset = Logo.objects.all()
+    serializer_class = LogoSerializer

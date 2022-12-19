@@ -1,4 +1,4 @@
-from rest_framework import routers
+from rest_framework import routers, viewsets
 from django.urls import path, include
 from . import views
 from authentication.views import WalletViewSet
@@ -15,6 +15,9 @@ router.register(r'auction-request', views.AuctionOrderRequestViewSet, basename='
 router.register(r'product-media', views.MediaViewSet, basename='product-media')
 router.register(r'slider-media', views.SliderMediaViewSet, basename='slider-media')
 router.register(r'slider', views.SliderViewSet, basename='slider')
+router.register(r'product-values', views.ProductValuesViewset, basename='product-values')
+router.register(r'page', views.PageViewSet)
+router.register(r'logo', views.LogoViewSet)
 attrs_router = routers.SimpleRouter()
 attrs_router.register(r'product', views.ProductViewSet, basename='product')
 attrs_router.register(r'category', views.CategoryAttributeViewSet, basename='category-attrs')
@@ -24,4 +27,5 @@ attrs_router.register(r'detail', views.AttributDetailsViewSet, basename='attrs-d
 urlpatterns = [
     path('', include(router.urls)),
     path('attrs/', include(attrs_router.urls)),
+    path('approve-auction/<int:pk>/', views.approve_request, name='auction_approve')
 ]

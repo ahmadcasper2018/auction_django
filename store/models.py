@@ -14,6 +14,31 @@ from location.models import Address
 
 # Create your models here.
 
+class Logo(models.Model):
+    file = models.FileField(upload_to='images/logo/')
+
+
+class Page(models.Model):
+    HOME = 'home'
+    AUCTION = 'auction'
+    SHOP = 'shop'
+    BAZAR = 'bazar'
+    SLIDER_TYPES = (
+        (AUCTION, 'Auction'),
+        (SHOP, 'Shop'),
+        (BAZAR, 'Bazar'),
+        (HOME, 'Home'),
+    )
+    page_type = models.CharField(max_length=10, choices=SLIDER_TYPES, default=SHOP)
+    about = models.TextField()
+
+
+class AttributValue(models.Model):
+    value = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.value
+
 
 class Attribut(models.Model):
     title = models.CharField(max_length=32)
@@ -144,17 +169,20 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
-    @property
-    def tags(self):
-        attrs = self.attrs.all()
-        if not attrs:
-            return []
-        else:
-            return [atr.values for atr in attrs]
+    # @property
+    # def tags(self):
+    #     attrs = self.attrs.all()
+    #     if not attrs:
+    #         return []
+    #     else:
+    #         return [atr.values for atr in attrs]
 
 
 class ProductAttribut(models.Model):
-    value = models.CharField(max_length=128)
+    values = models.ManyToManyField(
+        AttributValue,
+        related_name='product_attrs'
+    )
     product = models.ForeignKey(
         Product,
         related_name='attrs',
@@ -168,11 +196,17 @@ class ProductAttribut(models.Model):
     )
 
     @property
-    def values(self):
-        return {
-            'en': self.value_en,
-            'ar': self.value_ar
-        }
+    def flattern_values(self):
+        result = []
+        for value in self.values.all():
+            result.append(
+                {
+                    'en': value.value_en,
+                    'ar': value.value_ar
+                }
+            )
+
+        return result
 
 
 class Media(models.Model):
@@ -185,7 +219,6 @@ class Media(models.Model):
     )
     attributes = models.ManyToManyField(
         Attribut,
-        null=True,
         related_name='medias',
     )
     alt = models.CharField(max_length=32, null=True)
@@ -328,18 +361,24 @@ class Brand(models.Model):
         return self.title
 
 
-class Slider(models.Model):
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-
-
 class SliderMedia(models.Model):
     file = models.FileField(upload_to='images/slider-media/%Y/%m/%d')
-    slider = models.ForeignKey(
-        Slider,
+
+
+class Slider(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    slider_media = models.ForeignKey(
+        SliderMedia,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    page = models.ForeignKey(
+        Page,
+        related_name='sliders',
         on_delete=models.SET_NULL,
         null=True,
-        related_name='media'
+
     )
 
 
@@ -361,3 +400,12 @@ class AuctionOrder(models.Model):
     )
     direct = models.BooleanField(default=False)
     current_payment = models.DecimalField(max_digits=10, decimal_places=3, default=0)
+
+
+class ProductViewers(models.Model):
+    product = models.OneToOneField(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="views",
+    )
+    viewers = models.PositiveIntegerField(default=0)

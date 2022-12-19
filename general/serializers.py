@@ -1,7 +1,9 @@
 from abc import ABC
 
 from rest_framework import serializers
-from .models import Question, KeyWord
+
+from store.serializers import SliderSerializer
+from .models import Question, KeyWord, ContactSettings
 
 
 class KeywordSerializer(serializers.Serializer):
@@ -23,3 +25,13 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ('id', 'question', 'answer', 'keyword')
+
+
+class ContactSettingsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = ContactSettings
+        fields = '__all__'
+
+

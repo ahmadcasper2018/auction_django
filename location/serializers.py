@@ -64,9 +64,18 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class CityInnerSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    title_currnet = serializers.CharField(read_only=True, source='title')
+
+    def get_title(self, instance):
+        return {
+            'en': instance.title_en,
+            'ar': instance.title_ar
+        }
+
     class Meta:
         model = City
-        fields = ('id', 'title_en', 'title_ar')
+        fields = ('id', 'title', 'title_currnet')
 
 
 class GovernorateSerializer(serializers.ModelSerializer):
@@ -81,16 +90,6 @@ class GovernorateSerializer(serializers.ModelSerializer):
             "en": instance.title_en,
             "ar": instance.title_ar
         }
-
-    # def create(self, validated_data):
-    #     cities = validated_data.pop('cities')
-    #     instance = super(GovernorateSerializer, self).create(validated_data)
-    #     for city in cities:
-    #         serilizer = CityInnerSerializer(data=city)
-    #         serilizer.is_valid(raise_exception=True)
-    #         obj = serilizer.save(governorate=instance)
-    #         obj.save()
-    #     return instance
 
     class Meta:
         model = Governorate
