@@ -20,7 +20,7 @@ class Logo(models.Model):
 
 class Page(models.Model):
     HOME = 'home'
-    AUCTION = 'auction'
+    AUCTION = 'auctions'
     SHOP = 'shops'
     BAZAR = 'bazaar'
     SLIDER_TYPES = (
