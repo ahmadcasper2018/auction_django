@@ -325,7 +325,9 @@ class PageViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
+        page_type = self.request.query_params.get('page_type',None)
+        if page_type:
+            queryset = queryset.filter(page_type=page_type)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
