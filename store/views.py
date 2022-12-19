@@ -351,7 +351,7 @@ class PageViewSet(viewsets.ModelViewSet):
         contact_serializer = ContactSettingsSerializer(conatct)
         data = {'page': serializer.data}
         if logo:
-            serializer  = LogoSerializer(logo)
+            serializer = LogoSerializer(logo)
             data.update(
                 {
                     'logo': serializer.data
