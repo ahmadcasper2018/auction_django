@@ -280,6 +280,16 @@ class CategorySerializer(serializers.ModelSerializer):
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
 
+    def validate(self, attrs):
+        code = attrs.get('code', None)
+        if code:
+            if code not in [Category.AUCTION, Category.SHOP, Category.BAZAR]:
+                raise ValidationError("invalid code")
+            objs = Category.objects.filter(code=code)
+            if len(objs) > 0:
+                raise ValidationError("Category already exist !")
+        return attrs
+
     def get_title(self, instance):
         return {
             "en": instance.title_en,

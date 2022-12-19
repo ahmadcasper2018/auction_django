@@ -34,8 +34,7 @@ def measure_similarity(list1, list2):
 
 
 def flatten_values(product: Product):
-    raw_values = [list(i.values()) for i in product.tags]
-    last_values = [j for sub in raw_values for j in sub]
+    last_values = [j for sub in product.tags for j in sub]
     return last_values
 
 
@@ -128,6 +127,13 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not (instance.code is None):
+            raise ValidationError("You can't delete this type of categories")
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShippingCompanyViewSet(viewsets.ModelViewSet):

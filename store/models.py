@@ -1,6 +1,7 @@
 import os
 from decimal import Decimal
 
+
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.conf import settings
@@ -60,10 +61,21 @@ class AttributDetails(models.Model):
 
 
 class Category(SoftDeleteModel):
+    AUCTION = 'auction'
+    SHOP = 'shop'
+    BAZAR = 'bazar'
+
+    CODE_TYPES = (
+        (AUCTION, 'Auction'),
+        (SHOP, 'Shop'),
+        (BAZAR, 'Bazar'),
+
+    )
     title = models.CharField(max_length=128)
     parent = models.ForeignKey('self', blank=True, null=True, related_name='childs', on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
+    code = models.CharField(max_length=12, choices=CODE_TYPES, null=True)
     objects = CategoryManager()
 
     @property
@@ -169,13 +181,15 @@ class Product(models.Model):
     def __str__(self):
         return self.title
 
-    # @property
-    # def tags(self):
-    #     attrs = self.attrs.all()
-    #     if not attrs:
-    #         return []
-    #     else:
-    #         return [atr.values for atr in attrs]
+    @property
+    def tags(self):
+        attrs = self.attrs.all()
+        result = []
+        if not attrs:
+            return []
+        else:
+            result.extend([atr.flattern_values for atr in attrs])
+        return result
 
 
 class ProductAttribut(models.Model):
@@ -199,12 +213,7 @@ class ProductAttribut(models.Model):
     def flattern_values(self):
         result = []
         for value in self.values.all():
-            result.append(
-                {
-                    'en': value.value_en,
-                    'ar': value.value_ar
-                }
-            )
+            result.extend([value.value_en, value.value_ar])
 
         return result
 
