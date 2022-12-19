@@ -90,15 +90,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.views.viewers += 1
         instance.views.save()
-        # similar_products = find_similar_products(instance)
+        similar_products = find_similar_products(instance)
         serializer = self.get_serializer(instance)
 
-        # similar = self.get_serializer(similar_products, many=True)
+        similar = self.get_serializer(similar_products, many=True)
 
         data = serializer.data
-        # data.update(
-        #     {"similar_products": similar.data}
-        # )
+        data.update(
+            {"similar_products": similar.data}
+        )
         return Response(data)
 
     def create(self, request, *args, **kwargs):
