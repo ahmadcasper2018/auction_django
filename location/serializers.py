@@ -26,7 +26,7 @@ class SubCompanySerializer(serializers.Serializer):
 class AddressSerializer(serializers.ModelSerializer):
     shipping_companys = SubCompanySerializer(read_only=True, many=True)
     address = serializers.SerializerMethodField()
-    address_currnet = serializers.CharField(read_only=True, source='address')
+    address_current = serializers.CharField(read_only=True, source='address')
     address_en = serializers.CharField(write_only=True)
     address_ar = serializers.CharField(write_only=True)
 
@@ -41,13 +41,13 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = ('id', 'user', 'address', 'city', 'shipping_companys',
-                  'address_currnet',
+                  'address_current',
                   'address_en', 'address_ar',)
 
 
 class CitySerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
     title_en = serializers.CharField(write_only=True)
     title_ar = serializers.CharField(write_only=True)
 
@@ -59,13 +59,13 @@ class CitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = City
-        fields = ('id', 'title_currnet', 'title', 'title_en', 'title_ar', 'governorate',
+        fields = ('id', 'title_current', 'title', 'title_en', 'title_ar', 'governorate',
                   'title_en', 'title_ar')
 
 
 class CityInnerSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
 
     def get_title(self, instance):
         return {
@@ -75,13 +75,13 @@ class CityInnerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = City
-        fields = ('id', 'title', 'title_currnet')
+        fields = ('id', 'title', 'title_current')
 
 
 class GovernorateSerializer(serializers.ModelSerializer):
     cities = CityInnerSerializer(many=True, read_only=True)
     title = serializers.SerializerMethodField()
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
     title_en = serializers.CharField(write_only=True)
     title_ar = serializers.CharField(write_only=True)
 
@@ -97,7 +97,7 @@ class GovernorateSerializer(serializers.ModelSerializer):
                   'title_en',
                   'title_ar',
                   'cities',
-                  'title_currnet',
+                  'title_current',
                   'title'
 
                   )

@@ -144,12 +144,12 @@ class SliderMediaSerializer(serializers.ModelSerializer):
 
 class SliderSerializer(serializers.ModelSerializer):
     media = SliderMediaSerializer(source='slider_media', read_only=True)
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
     title = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
-    description_currnet = serializers.CharField(read_only=True, source='description')
+    description_current = serializers.CharField(read_only=True, source='description')
     description_ar = serializers.CharField(write_only=True)
     description_en = serializers.CharField(write_only=True)
 
@@ -183,9 +183,9 @@ class SliderSerializer(serializers.ModelSerializer):
                   'slider_media',
                   'title_en',
                   'slider_media',
-                  'title_currnet',
+                  'title_current',
                   'page',
-                  'description_currnet',
+                  'description_current',
                   'title_ar',
                   'description',
                   'description_ar',
@@ -287,7 +287,7 @@ class CategorySerializer(serializers.ModelSerializer):
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
     title = serializers.SerializerMethodField(required=False)
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
@@ -363,7 +363,7 @@ class ProductSerializer(serializers.ModelSerializer):
     address = AddressCompanySerializer()
     title = serializers.SerializerMethodField(required=False)
     title_current = serializers.CharField(read_only=True, source='title')
-    description_currnet = serializers.CharField(read_only=True, source='description')
+    description_current = serializers.CharField(read_only=True, source='description')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
     description = serializers.SerializerMethodField(read_only=True)
@@ -507,7 +507,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'used',
             'sale',
             'title_en',
-            'description_currnet',
+            'description_current',
             'product_orders',
             'discount',
             'media',
