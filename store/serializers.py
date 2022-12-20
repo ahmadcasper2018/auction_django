@@ -386,6 +386,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category = validated_data.pop('category', None)
+        if not category:
+            raise ValidationError('you have to enter a category')
         attrs = self.context['request'].data.get('attrs', None)
         media_files = self.context['request'].data.get('media_files')
         address = validated_data.pop('address', None)

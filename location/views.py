@@ -25,7 +25,6 @@ class CityView(mixins.RetrieveModelMixin,
                viewsets.GenericViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
-    permission_classes = (IsAuthenticated,)
 
 
 class AddressView(mixins.RetrieveModelMixin,
@@ -36,7 +35,12 @@ class AddressView(mixins.RetrieveModelMixin,
                   ):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
-    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        qs = super(AddressView, self).get_queryset()
+        if not self.request.user.is_superuser:
+            qs = qs.filter(user=self.request.user)
+        return qs
 
 
 class GovernorateView(mixins.RetrieveModelMixin,
@@ -46,4 +50,3 @@ class GovernorateView(mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet):
     queryset = Governorate.objects.all()
     serializer_class = GovernorateSerializer
-    permission_classes = (IsAuthenticated,)
