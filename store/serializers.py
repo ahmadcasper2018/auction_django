@@ -267,6 +267,7 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
 
 class SubCategorySerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(read_only=True)
+    title_current = serializers.CharField(read_only=True, source='title')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
 
