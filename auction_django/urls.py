@@ -44,5 +44,6 @@ urlpatterns = [
     path('reset_password/<str:uid>/<str:token>/', PasswordResetRequest.as_view())
 ]
 
-urlpatterns += static(settings.MEDIA_URL,
-                      document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
