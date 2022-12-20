@@ -12,6 +12,8 @@ from sys import path
 import dj_database_url
 import datetime
 
+DEBUG = False
+
 DJANGO_ROOT = dirname(dirname(abspath(__file__)))
 
 # Absolute filesystem path to the top-level project folder:
