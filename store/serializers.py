@@ -96,7 +96,7 @@ class AddressCompanySerializer(serializers.ModelSerializer):
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
-    title_currnet = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.CharField(read_only=True, source='title')
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
     id = serializers.IntegerField()
@@ -111,7 +111,7 @@ class CategoryProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'title_currnet')
+        fields = ('id', 'title', 'title_en', 'title_ar', 'image', 'title_current')
 
 
 class ProductCategorySerializer(serializers.Serializer):
@@ -601,10 +601,6 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
             send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
                       ['ahmadc@gmail.com'])
 
-        message = f"User {request.user.username} wants to make a direct purchase for your product"
-
-        send_mail('New Direct payemnt request', message, settings.EMAIL_HOST_USER,
-                  ['ahmadc@gmail.com'])
         instance.save()
         new_order.auction_orders.add(instance)
         auction_product.auction_orders.add(instance)
@@ -612,6 +608,11 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         auction_product.save()
         # OrderLog.objects.create(order=instance, mozaeda=False)
         return instance
+
+    # def update(self, instance, validated_data):
+    #     direct = validated_data.get('directed', False)
+    #
+
 
     class Meta:
         model = AuctionOrder
