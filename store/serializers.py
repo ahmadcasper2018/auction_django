@@ -25,6 +25,17 @@ from .models import (
 from drf_extra_fields.fields import Base64ImageField
 
 
+def handle_404(message, field):
+    errors = {
+        field: [f"the entered {field} is not valid"]
+    }
+
+    return {
+        "message": message,
+        "errors": errors
+    }
+
+
 # from authentication.serializers import UserProductSerializer
 class AttributeValueSerializer(serializers.ModelSerializer):
     value = serializers.SerializerMethodField()
@@ -397,25 +408,34 @@ class ProductSerializer(serializers.ModelSerializer):
             }
         )
         instance = super(ProductSerializer, self).create(validated_data)
-        category_obj = get_object_or_404(Category, pk=int(category['id']))
+        category_obj = Category.objects.filter(pk=category['id']).first()
+        if not category_obj:
+            raise ValidationError(handle_404('invalid input', 'Category'))
+
         instance.category = category_obj
         if attrs:
             for attr in attrs:
                 attribut_id = attr.get('attribute')
-                attribute = get_object_or_404(Attribut, pk=attribut_id)
+                attribute = Attribut.objects.filter(pk=attribut_id).first()
+                if not attribute:
+                    raise ValidationError(handle_404('invalid input', 'attribute'))
                 values = attr.get('values')
                 new_product_attribute = ProductAttribut.objects.create(
                     attribut=attribute,
                     product=instance
                 )
                 values_obs = AttributValue.objects.filter(pk__in=values)
+                if not values_obs:
+                    raise ValidationError(handle_404('invalid input', 'values'))
                 for value in values_obs:
                     new_product_attribute.values.add(value)
                 new_product_attribute.save()
 
         if media_files:
             for file_id in media_files:
-                media_obj = get_object_or_404(Media, pk=int(file_id))
+                media_obj = Media.objects.filter(pk=int(file_id)).first()
+                if not media_obj:
+                    raise ValidationError(handle_404('invalid input', 'media'))
                 instance.media.add(media_obj)
                 instance.save()
         if address:
