@@ -10,23 +10,26 @@ from general.models import ContactSettings
 from general.permessions import SettingsAccress
 from general.serializers import ContactSettingsSerializer
 from .filters import ProductFilter
+from .pagination import ProductsPagination
 from .permessions import ProductPermession, BrandPermession
 from .models import *
 from .serializers import *
 from django_filters import rest_framework as filters
 
-
 # Create your views here.
 
-def approve_request(request, pk):
-    auction = get_object_or_404(AuctionOrder, pk=pk)
-    product = auction.auction_product
-    product.active = False
-    product.save()
-    client = auction.order_product.user
-    send_mail('Request status', f"you direct payment request for {product.title} was approved",
-              settings.EMAIL_HOST_USER,
-              [client.email])
+# def approve_request(request, pk):
+#     auction = get_object_or_404(AuctionOrder, pk=pk)
+#     product = auction.auction_product
+#     client = auction.order_product.user
+#     return render_to_string('direct_request.html', {'context': {}})
+
+
+from django.views.generic.base import TemplateView
+
+
+class AboutUs(TemplateView):
+    template_name = 'direct_request.html'
 
 
 def measure_similarity(list1, list2):
@@ -67,6 +70,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = (ProductPermession,)
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ProductFilter
+    pagination_class = ProductsPagination
 
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
@@ -199,9 +203,12 @@ class AuctionOrderRequestViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
     def get_queryset(self):
-        # if self.request.user.is_anonymous:
-        #     return AuctionOrder.objects.none()
-        return super(AuctionOrderRequestViewSet, self).get_queryset()
+        qs = super(AuctionOrderRequestViewSet, self).get_queryset()
+        product = self.request.query_params.get('product', None)
+        if product:
+            qs = qs.filter(auction_product__pk=product)
+        return qs
+
         # .filter(auction_product__user=self.request.user)
 
 
