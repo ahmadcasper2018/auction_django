@@ -193,6 +193,12 @@ class Product(models.Model):
     def tags_show(self):
         attrs = self.attrs.all()
         result = []
+        if self.category.brands:
+            brand_list = []
+            brands = self.category.brands.all()
+            brand_list = [brand.title for brand in brands]
+            result.extend(brand_list)
+
         if not attrs:
             return []
         else:
@@ -236,12 +242,7 @@ class ProductAttribut(models.Model):
             return result
         else:
             for value in nested_values:
-                result.append(
-                    {
-                        'value_en': value.value_en,
-                        'value_ar': value.value_ar,
-                    }
-                )
+                result.append(value.value)
         return result
 
 
