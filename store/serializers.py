@@ -372,12 +372,10 @@ class ProductSerializer(serializers.ModelSerializer):
     description_en = serializers.CharField(write_only=True)
     reviews = SubUserSerializer(many=True, read_only=True)
     discount = serializers.DecimalField(max_digits=10, decimal_places=3, required=False)
-    # tags = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
 
-    # def get_tags(self, instance):
-    #     return instance.tags
-
-    # description = serializers.SerializerMethodField()
+    def get_tags(self, instance):
+        return instance.tags_show
 
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     type = serializers.SerializerMethodField(read_only=True)
@@ -504,9 +502,10 @@ class ProductSerializer(serializers.ModelSerializer):
             'title',
             'title_ar',
             'new',
-
+            'tags',
             'used',
             'sale',
+            'stock',
             'title_en',
             'description_current',
             'product_orders',

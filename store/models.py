@@ -189,6 +189,19 @@ class Product(models.Model):
             result.extend([atr.flattern_values for atr in attrs])
         return result
 
+    @property
+    def tags_show(self):
+        attrs = self.attrs.all()
+        result = []
+        if not attrs:
+            return []
+        else:
+            for atr in attrs:
+                result.extend(
+                    atr.get_tag_values
+                )
+        return result
+
 
 class ProductAttribut(models.Model):
     values = models.ManyToManyField(
@@ -213,6 +226,22 @@ class ProductAttribut(models.Model):
         for value in self.values.all():
             result.extend([value.value_en, value.value_ar])
 
+        return result
+
+    @property
+    def get_tag_values(self):
+        result = []
+        nested_values = self.values.all()
+        if len(nested_values) == 0:
+            return result
+        else:
+            for value in nested_values:
+                result.append(
+                    {
+                        'value_en': value.value_en,
+                        'value_ar': value.value_ar,
+                    }
+                )
         return result
 
 
