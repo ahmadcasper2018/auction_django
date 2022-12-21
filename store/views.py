@@ -1,6 +1,8 @@
 import random
 
 from django.core.files import File
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -72,6 +74,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
     pagination_class = ProductsPagination
 
+    @method_decorator(cache_page(60 * 60))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
         cat_id = self.request.query_params.get('cat_id', None)
@@ -131,6 +137,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    @method_decorator(cache_page(60 * 60))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = super(CategoryViewSet, self).get_queryset()
