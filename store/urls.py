@@ -27,5 +27,4 @@ attrs_router.register(r'detail', views.AttributDetailsViewSet, basename='attrs-d
 urlpatterns = [
     path('', include(router.urls)),
     path('attrs/', include(attrs_router.urls)),
-    path('approve-auction/<int:pk>/', views.approve_request, name='auction_approve')
 ]
