@@ -212,6 +212,7 @@ class AttributDetailsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     value_ar = serializers.CharField(write_only=True)
     value_en = serializers.CharField(write_only=True)
+    value_current = serializers.CharField(read_only=True, source='value')
 
     def get_value(self, instance):
         return {
@@ -221,7 +222,7 @@ class AttributDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AttributDetails
-        fields = ('id', 'value', 'value_en', 'value_ar')
+        fields = ('id', 'value', 'value_en', 'value_ar', 'value_current')
 
 
 class AbstractAttributDetailsSerializer(serializers.ModelSerializer):
@@ -519,14 +520,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class AttributSerializer(serializers.ModelSerializer):
     values = AttributDetailsSerializer(many=True)
+    title_current = serializers.CharField(read_only=True, source='title')
+    title = serializers.SerializerMethodField()
+    title_ar = serializers.CharField(write_only=True)
+    title_en = serializers.CharField(write_only=True)
 
-    # title = serializers.SerializerMethodField()
-
-    # def get_title(self, instance):
-    #     return {
-    #         "en": instance.title_en,
-    #         "ar": instance.title_ar
-    #     }
+    def get_title(self, instance):
+        return {
+            "en": instance.title_en,
+            "ar": instance.title_ar
+        }
 
     def create(self, validated_data):
         values = validated_data.pop('values')
@@ -552,7 +555,7 @@ class AttributSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attribut
-        fields = ('id', 'title', 'values')
+        fields = ('id', 'title', 'title_current', 'values', 'title_ar', 'title_en')
 
 
 class AuctionOrderSerializer(serializers.ModelSerializer):
@@ -606,13 +609,30 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         auction_product.auction_orders.add(instance)
         new_order.save()
         auction_product.save()
-        # OrderLog.objects.create(order=instance, mozaeda=False)
+        OrderLog.objects.create(order=instance, mozaeda=True)
         return instance
 
-    # def update(self, instance, validated_data):
-    #     direct = validated_data.get('directed', False)
-    #
-
+    def update(self, instance, validated_data):
+        request = self.context['request']
+        direct = validated_data.get('directed', False)
+        increase_amount = request.data.get('increase_amount', None)
+        increase_user = validated_data.get('increase_user', None)
+        max_payment = instance.current_price
+        if increase_amount:
+            new_value = max_payment + instance.increase_amount
+            if request.user.wallet.amount >= new_value:
+                instance.current_payment = new_value
+                instance.current_price += instance.increase_amount
+        elif increase_user:
+            new_value = max_payment + increase_user
+            if request.user.wallet.amount >= new_value:
+                instance.current_payment = new_value
+                instance.current_price += increase_user
+        elif direct and request.user.wallet.amount >= instance.auction_product.price:
+            send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
+                      ['ahmadc@gmail.com'])
+        instance.save()
+        return instance
 
     class Meta:
         model = AuctionOrder
