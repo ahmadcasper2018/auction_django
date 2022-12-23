@@ -58,7 +58,6 @@ def validate_product_order(data):
     product = data.get("product")
     quantity = data.get("quantity")
     category_title = product.product_type
-    # directed_mozaeda = data.get('directed_mozaeda')
     if category_title in ['direct', 'shop']:
         if not quantity:
             raise ValidationError(f"please enter the amount of products you want to purchase")
@@ -608,7 +607,7 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         auction_product.auction_orders.add(instance)
         new_order.save()
         auction_product.save()
-        OrderLog.objects.create(order=instance, mozaeda=True)
+        OrderLog.objects.create(order=instance, auctions=True)
         return instance
 
     def update(self, instance, validated_data):
@@ -658,14 +657,14 @@ class OrderSerializer(serializers.ModelSerializer):
             validate_product_order(product_order)
             new_pd = ProductOrder.objects.create(**product_order)
             new_pd.order = instance
-            if new_pd.product.product_type in ['bazar', 'shop']:
+            if new_pd.product.product_type in ['bazaar', 'shops']:
                 new_pd.product.amount = new_pd.product.amount - quantity
                 new_pd.product.save()
                 instance.save()
             instance.product_orders.add(new_pd)
             instance.save()
 
-        OrderLog.objects.create(order=instance, mozaeda=False)
+        OrderLog.objects.create(order=instance, auctions=False)
         return instance
 
     def update(self, instance, validated_data):
@@ -744,3 +743,11 @@ class PageSerializer(serializers.ModelSerializer):
                   'image',
                   'about',
                   'about_ar')
+
+
+class OrderLogSerializer(serializers.ModelSerializer):
+    by = serializers.StringRelatedField()
+
+    class Meta:
+        model = OrderLog
+        fields = '__all__'

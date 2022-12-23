@@ -407,3 +407,17 @@ class PageViewSet(viewsets.ModelViewSet):
 class LogoViewSet(viewsets.ModelViewSet):
     queryset = Logo.objects.all()
     serializer_class = LogoSerializer
+
+
+class OrderLogViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = OrderLog.objects.all()
+    serializer_class = OrderLogSerializer
+
+    def get_queryset(self):
+        auctions = self.request.query_params.get('auctions', None)
+        qs = super(OrderLogViewSet, self).get_queryset()
+        if auctions:
+            qs = qs.filter(auctions=True)
+        if not (self.request.user.is_superuser or self.request.user.is_staff):
+            qs = qs.filter(by=self.request.user)
+        return qs

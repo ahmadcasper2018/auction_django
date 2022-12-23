@@ -377,7 +377,7 @@ class OrderLog(TimeStampedModel):
         blank=True,
     )
 
-    mozaeda = models.BooleanField(default=False)
+    auctions = models.BooleanField(default=False)
 
     def __str__(self):
         return f"log by {self.by} on {self.order}"
