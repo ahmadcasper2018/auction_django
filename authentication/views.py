@@ -105,7 +105,7 @@ class ActionViewMixin(object):
             data = {'message': 'You have entered wrong email or password',
                     'errors': {'email or password': serializer.errors.get('non_field_errors')}}
 
-            return Response(data=data, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         return self._action(serializer)
 
 
@@ -148,7 +148,7 @@ class UserViewSet(viewsets.ModelViewSet):
         errors = {"message": "Errors with the entered data for this user"}
         if not serializer.is_valid():
             errors.update({'errors': serializer.errors})
-            return Response(data=errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

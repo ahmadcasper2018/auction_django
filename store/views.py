@@ -131,7 +131,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
             return Response(response, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+            errors = {'message': 'You have entered invalid data for this product'}
+            errors.update({'errors': serializer.errors})
+            return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
