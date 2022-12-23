@@ -98,7 +98,18 @@ class PasswordResetRequest(APIView):
         return Response(response, status=200)
 
 
-class TokenCreateView(utils.ActionViewMixin, generics.GenericAPIView):
+class ActionViewMixin(object):
+    def post(self, request, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            data = {'message': 'You have entered wrong email or password',
+                    'errors': {'email or password': serializer.errors.get('non_field_errors')}}
+
+            return Response(data=data, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return self._action(serializer)
+
+
+class TokenCreateView(ActionViewMixin, generics.GenericAPIView):
     """
     Use this endpoint to obtain user authentication token.
     """
@@ -134,7 +145,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = UserCreationSerializer(data=request.data, context={"request": self.request})
-        serializer.is_valid(raise_exception=True)
+        errors = {"message": "Errors with the entered data for this user"}
+        if not serializer.is_valid():
+            errors.update({'errors': serializer.errors})
+            return Response(data=errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
