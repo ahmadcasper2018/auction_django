@@ -408,11 +408,12 @@ class ProductSerializer(serializers.ModelSerializer):
                 "user": self.context['request'].user
             }
         )
-        instance = super(ProductSerializer, self).create(validated_data)
+
         category_obj = Category.objects.filter(pk=category['id']).first()
         if not category_obj:
             raise ValidationError(handle_404('invalid input', 'Category'))
 
+        instance = super(ProductSerializer, self).create(validated_data)
         instance.category = category_obj
         if attrs:
             for attr in attrs:
