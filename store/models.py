@@ -168,13 +168,7 @@ class Product(models.Model):
 
     @property
     def product_type(self):
-        p_type = self.category
-        while p_type.parent:
-            test = p_type.parent
-            if not test:
-                return p_type.title
-            p_type = p_type.parent
-        return p_type.title
+        return  self.category.code
 
     def __str__(self):
         return self.title

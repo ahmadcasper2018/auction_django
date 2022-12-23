@@ -58,7 +58,7 @@ def validate_product_order(data):
     product = data.get("product")
     quantity = data.get("quantity")
     category_title = product.product_type
-    if category_title in ['direct', 'shop']:
+    if category_title in ['bazaar', 'shops']:
         if not quantity:
             raise ValidationError(f"please enter the amount of products you want to purchase")
         elif quantity > product.amount:
