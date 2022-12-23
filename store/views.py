@@ -74,9 +74,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
     pagination_class = ProductsPagination
 
-    @method_decorator(cache_page(60 * 60))
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    # @method_decorator(cache_page(60 * 60))
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
