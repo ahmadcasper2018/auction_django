@@ -248,3 +248,10 @@ EMAIL_PORT = 1025
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = False
+
+CACHES = {
+    "default": {
+        "BACKEND":
+            "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
