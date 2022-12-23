@@ -4,6 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
+
+from authentication.models import User
 from authentication.serializers import SubUserSerializer
 from location.models import Address
 from .models import (
@@ -640,9 +642,20 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField(read_only=True)
     product_orders = ProductOrderSerializer(many=True)
-    user = serializers.StringRelatedField()
-    shipping_company = serializers.StringRelatedField()
-    address = serializers.StringRelatedField()
+    username = serializers.SerializerMethodField()
+    company = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    shipping_company = serializers.PrimaryKeyRelatedField(queryset=ShippingCompany.objects.all(), write_only=True)
+    address = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), write_only=True)
+
+    def get_username(self, instance):
+        return instance.user.email
+
+    def get_company(self, instance):
+        return instance.shipping_company.name
+
+    def get_location(self, instance):
+        return instance.address.address
 
     def get_total_cost(self, instance):
         raw_cost = sum([elment.price for elment in instance.product_orders.all()])
