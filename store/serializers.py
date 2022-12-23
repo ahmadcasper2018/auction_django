@@ -640,6 +640,9 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField(read_only=True)
     product_orders = ProductOrderSerializer(many=True)
+    user = serializers.StringRelatedField()
+    shipping_company = serializers.StringRelatedField()
+    address = serializers.StringRelatedField()
 
     def get_total_cost(self, instance):
         raw_cost = sum([elment.price for elment in instance.product_orders.all()])
