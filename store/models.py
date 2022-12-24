@@ -80,6 +80,7 @@ class Category(SoftDeleteModel):
     parent = models.ForeignKey('self', blank=True, null=True, related_name='childs', on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
+    banner = models.ImageField(upload_to='images/category/banners/%Y/%m/%d', blank=True, null=True)
     code = models.CharField(max_length=12, choices=CODE_TYPES, null=True)
     objects = CategoryManager()
 

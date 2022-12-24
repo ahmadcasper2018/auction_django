@@ -298,6 +298,7 @@ class CategorySerializer(serializers.ModelSerializer):
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
+    banner = Base64ImageField(required=False)
     title_current = serializers.CharField(read_only=True, source='title')
     title = serializers.SerializerMethodField(required=False)
     title_ar = serializers.CharField(write_only=True)
