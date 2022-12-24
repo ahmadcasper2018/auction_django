@@ -30,7 +30,7 @@ from django_filters import rest_framework as filters
 from django.views.generic.base import TemplateView
 
 
-def flate_2D(l):
+def flat_2D(l):
     return list(set([j for sub in l for j in sub]))
 
 
@@ -95,9 +95,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             categories = categories.filter(pk=cat_id).first()
             colors = [i.attribute_values('color') for i in categories.products.all()]
             sizes = [i.attribute_values('size') for i in categories.products.all()]
-            brands_flatten = categories.brands_list
-            colors_flatten = flate_2D(colors)
-            sizes_flatten = flate_2D(sizes)
+            brands_flatten = list(set(categories.brands_list))
+            colors_flatten = flat_2D(colors)
+            sizes_flatten = flat_2D(sizes)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
