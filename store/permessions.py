@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class ProductPermession(BasePermission):
@@ -8,7 +8,7 @@ class ProductPermession(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if request.method in ['PATCH', 'PUT']:
-            return request.user == obj.user
+            return request.user.is_superuser or (request.user == obj.user)
         return True
 
 
