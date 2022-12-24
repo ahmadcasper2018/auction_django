@@ -196,7 +196,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     queryset = Review.objects.all()
-    permission_classes = (IsAuthenticated, ReviewPermession)
+    permission_classes = (ReviewPermession,)
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
