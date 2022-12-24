@@ -208,6 +208,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super(ReviewViewSet, self).get_queryset()
+        product = self.request.query_params.get('product')
+        if product:
+            qs = qs.filter(product__pk=product)
         return qs
 
 
