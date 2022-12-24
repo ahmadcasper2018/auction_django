@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
-
+from django.db import transaction
 from authentication.models import User
 from authentication.serializers import SubUserSerializer
 from location.models import Address
@@ -313,15 +313,16 @@ class CategorySerializer(serializers.ModelSerializer):
             "ar": instance.title_ar
         }
 
+    @transaction.atomic
     def create(self, validated_data):
         category_attrs = validated_data.pop('category_attrs', None)
         instance = super(CategorySerializer, self).create(validated_data)
         if category_attrs:
             for attr in category_attrs:
-                obj, created = CategoryAttribute.objects.get_or_create(**attr)
-                obj.category = instance
-                obj.save()
-                instance.category_attrs.add(obj)
+                new_obj = CategoryAttribute.objects.create(**attr)
+                new_obj.category = instance
+                new_obj.save()
+                instance.category_attrs.add(new_obj)
             instance.save()
         return instance
 
