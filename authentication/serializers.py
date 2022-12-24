@@ -194,51 +194,50 @@ class UserExtendedSerializer(UserSerializer):
     phones = PhoneSerializer(many=True)
     addresses = AddressSerializer(many=True)
     avatar = Base64ImageField(required=False)
+    email = serializers.EmailField(read_only=True)
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
     wallet = WalletSerializer(read_only=True)
-    is_staff = serializers.BooleanField(write_only=True, required=False)
-    is_superuser = serializers.BooleanField(write_only=True, required=False)
-    is_active = serializers.BooleanField(write_only=True, required=False)
+    user_role = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
-        if not attrs.get('phones') or len(attrs.get('phones')) == 0:
-            raise ValidationError('please enter at least one valid phone number !')
-        if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
-            raise ValidationError('please enter at least one valid address !')
-        if (attrs.get('is_staff') or attrs.get('is_superuser') or attrs.get('is_active')) and not \
-                self.context['request'].user.is_superuser:
+        if attrs.get('user_role') not in ['admin', 'superuser', 'normal']:
+            raise ValidationError({"Invalid types": "You  have entered invalid type of users !"})
+        if attrs.get('user_role') and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
         return attrs
 
     def update(self, instance, validated_data):
         phones = validated_data.pop('phones')
         addresses = validated_data.pop('addresses')
-        instance.phones.all().delete()
-        instance.addresses.all().delete()
-        for phone in phones:
-            obj, created = Phone.objects.get_or_create(user=instance, **phone)
-            obj.phone = phone.get('phone', obj.phone)
-            obj.type = phone.get('type', obj.phone)
-            obj.save()
-            instance.phones.add(obj)
-            instance.save()
+        username = validated_data.pop('username')
+        if User.objects.filter(username=username):
+            raise ValidationError({"User exist": "user with this name already exists!"})
 
-        for location in addresses:
-            obj, created = Address.objects.get_or_create(user=instance, **location)
-            obj.city = location.get('city', obj.city)
-            obj.address = location.get('address', obj.address)
-            obj.save()
-            instance.addresses.add(obj)
-            instance.save()
+        if phones:
+            instance.phones.all().delete()
+            for phone in phones:
+                obj, created = Phone.objects.get_or_create(user=instance, **phone)
+                obj.phone = phone.get('phone', obj.phone)
+                obj.type = phone.get('type', obj.phone)
+                obj.save()
+                instance.phones.add(obj)
+                instance.save()
+        if addresses:
+            instance.addresses.all().delete()
+            for location in addresses:
+                obj, created = Address.objects.get_or_create(user=instance, **location)
+                obj.city = location.get('city', obj.city)
+                obj.address = location.get('address', obj.address)
+                obj.save()
+                instance.addresses.add(obj)
+                instance.save()
         return super(UserExtendedSerializer, self).update(instance, validated_data)
 
     class Meta(UserSerializer.Meta):
         fields = ('id', 'email', 'username', 'avatar',
                   'gender',
-                  'is_active',
-                  'is_superuser',
-                  'is_staff',
+                  'user_role',
                   'wallet',
                   'reviews',
                   'wishlist',
