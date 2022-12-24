@@ -80,11 +80,33 @@ class ProductViewSet(viewsets.ModelViewSet):
     # def dispatch(self, request, *args, **kwargs):
     #     return super().dispatch(request, *args, **kwargs)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        categories = Category.objects.all()
+        brands = [category.brands_list for category in categories]
+        brands_flatten = [j for sub in brands for j in sub]
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = self.get_paginated_response(serializer.data).data
+            if brands_flatten:
+                data.update({'brands': brands_flatten})
+            return Response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        response = {"result": data}
+        if brands_flatten:
+            response = {"result": data}.update({'brands': brands_flatten})
+
+        return Response(response)
+
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
         cat_id = self.request.query_params.get('cat_id', None)
         brands = self.request.query_params.get('brands', None)
         my_products = self.request.query_params.get('my_products', None)
+        tags_search = self.request.query_params.get('tags_search', None)
 
         if brands:
             brands = brands.split(',')
@@ -95,6 +117,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         #     queryset = queryset.filter(status='a')
         if my_products:
             queryset = queryset.filter(user=self.request.user)
+
+        # if tags_search:
+        #     tags =
+        #     queryset = queryset.filter(user=self.request.user)
 
         return queryset
 

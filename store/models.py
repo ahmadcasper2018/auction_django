@@ -83,6 +83,14 @@ class Category(SoftDeleteModel):
         else:
             return self.parent.title
 
+    @property
+    def brands_list(self):
+        brands = self.brands.all()
+        if not brands:
+            return []
+        res = [brand.title for brand in brands]
+        return res
+
     def save(self, *args, **kwargs):
         if (not self.active) and self.products:
             self.products.update(
@@ -168,7 +176,7 @@ class Product(models.Model):
 
     @property
     def product_type(self):
-        return  self.category.code
+        return self.category.code
 
     def __str__(self):
         return self.title
