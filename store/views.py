@@ -120,9 +120,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         if my_products:
             queryset = queryset.filter(user=self.request.user)
 
-        # if tags_search:
-        #     tags =
-        #     queryset = queryset.filter(user=self.request.user)
+        if tags_search:
+            products = super(ProductViewSet, self).get_queryset()
+            similar_pks = []
+            tags_search = tags_search.split(',')
+            for product in products:
+                if tags_search in product.tags_show:
+                    similar_pks.append(product.pk)
+
+            queryset = queryset.filter(pk__in=similar_pks)
 
         return queryset
 
