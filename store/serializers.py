@@ -513,6 +513,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'type',
             'reviews',
             'title',
+            'start_time',
+            'end_time',
             'title_ar',
             'new',
             'tags',

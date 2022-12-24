@@ -85,6 +85,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         categories = Category.objects.all()
         brands = [category.brands_list for category in categories]
         brands_flatten = [j for sub in brands for j in sub]
+        brands_flatten = list(set(brands_flatten))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -95,9 +96,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         data = serializer.data
+
         response = {"result": data}
         if brands_flatten:
-            response = {"result": data}.update({'brands': brands_flatten})
+            response.update({'brands': brands_flatten})
 
         return Response(response)
 
