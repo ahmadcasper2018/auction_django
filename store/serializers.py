@@ -478,6 +478,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
+        brand = validated_data.pop('brand', None)
         media_files = self.context['request'].data.get('media_files')
         address = validated_data.pop('address', None)
         validated_data.update(
@@ -491,6 +492,10 @@ class ProductSerializer(serializers.ModelSerializer):
             if not category_obj:
                 raise ValidationError(handle_404('invalid input', 'Category'))
             instance.category = category_obj
+
+        if brand:
+            brand = get_object_or_404(Brand, pk=brand['id'])
+            instance.brand = brand
         if attrs:
             instance.attrs.clear()
             for attr in attrs:
