@@ -139,6 +139,14 @@ class Product(models.Model):
         null=True,
 
     )
+
+    brand = models.ForeignKey(
+        'Brand',
+        related_name='products',
+        on_delete=models.SET_NULL,
+        null=True,
+
+    )
     address = models.ForeignKey(
         Address,
         on_delete=models.CASCADE,

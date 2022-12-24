@@ -365,10 +365,16 @@ class ProductOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProductBrandSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title_current = serializers.CharField(read_only=True, source='title')
+
+
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
     category = ProductCategorySerializer()
     attrs = ProductAttributSubSerializer(many=True, required=False, read_only=True)
+    brand = ProductBrandSerializer(required=False)
     product_orders = ProductOrderSerializer(many=True, read_only=True)
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
@@ -409,6 +415,7 @@ class ProductSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         category = validated_data.pop('category', None)
+        brand = validated_data.pop('brand', None)
         if not category:
             raise ValidationError('you have to enter a category')
         attrs = self.context['request'].data.get('attrs', None)
@@ -425,6 +432,9 @@ class ProductSerializer(serializers.ModelSerializer):
             raise ValidationError(handle_404('invalid input', 'Category'))
 
         instance = super(ProductSerializer, self).create(validated_data)
+        if brand:
+            brand = get_object_or_404(Brand, pk=brand['id'])
+            instance.brand = brand
         instance.category = category_obj
         if attrs:
             for attr in attrs:
@@ -515,6 +525,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'description_ar',
             'description_en',
             'type',
+            'brand',
             'reviews',
             'title',
             'start_time',
@@ -561,7 +572,7 @@ class AttributSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        values = validated_data.pop('values',None)
+        values = validated_data.pop('values', None)
         instance = super(AttributSerializer, self).update(instance, validated_data)
         if values:
             for value in values:
