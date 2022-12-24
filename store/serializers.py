@@ -256,6 +256,7 @@ class ProductAttributSerializer(serializers.ModelSerializer):
 class ProductAttributSubSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(read_only=True)
     values = AttributeValueSerializer(many=True, read_only=True)
+    title_current = serializers.CharField(read_only=True, source='title')
 
     def get_title(self, instance):
         return {
@@ -267,7 +268,8 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
         model = ProductAttribut
         fields = ('id', 'attribut',
                   'title',
-                  'values',)
+                  'values',
+                  'title_current',)
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
