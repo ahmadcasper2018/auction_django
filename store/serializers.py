@@ -90,10 +90,14 @@ class BrandSerializer(serializers.ModelSerializer):
 
 class AddressCompanySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
+    city_current = serializers.SerializerMethodField()
+
+    def get_city_current(self, instance):
+        return instance.city.title
 
     class Meta:
         model = Address
-        fields = ('id', 'city', 'address')
+        fields = ('id', 'city', 'address', 'city_current')
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
