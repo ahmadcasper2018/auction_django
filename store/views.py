@@ -397,20 +397,37 @@ class PageViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        data = {}
+        products = Product.objects.none()
+        news = Product.objects.none()
+        popular = Product.objects.none()
+        sales = Product.objects.none()
         page_type = self.request.query_params.get('page_type', None)
         if page_type:
             queryset = queryset.filter(page_type=page_type).first()
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            products = Category.objects.get(code=page_type).products.all().order_by('-views__viewers')
+            sales = products.filter(discount__gt=0)
+            news = products.filter(new=True)
+        if sales and len(sales) > 10:
+            sales = sales[:10]
+        if news and len(news) > 10:
+            news = news[:10]
+        if products and len(products) > 10:
+            popular = products[:10]
+        else:
+            popular = products
+
         if not page_type:
             serializer = self.get_serializer(queryset, many=True)
             data = {'pages': serializer.data}
         else:
             serializer = self.get_serializer(queryset)
-            data = {'page_type': serializer.data['page_type'], 'id': serializer.data['id'], 'page': serializer.data}
+            data = {'page_type': serializer.data['page_type'],
+                    'id': serializer.data['id'],
+                    'page': serializer.data,
+                    'new': ProductSerializer(news, many=True).data,
+                    'popular': ProductSerializer(popular, many=True).data,
+                    'sale': ProductSerializer(sales, many=True).data,
+                    }
         conatct = ContactSettings.objects.first()
         contact_serializer = ContactSettingsSerializer(conatct)
 
