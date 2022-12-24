@@ -561,19 +561,20 @@ class AttributSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        values = validated_data.pop('values')
+        values = validated_data.pop('values',None)
         instance = super(AttributSerializer, self).update(instance, validated_data)
-        for value in values:
-            obj = get_object_or_404(AttributDetails, pk=int(value['id']))
-            obj.value = value.get('value', obj.value)
-            obj.value_en = value.get('value', obj.value_en)
-            obj.value_ar = value.get('value', obj.value_ar)
-            obj.save()
+        if values:
+            for value in values:
+                obj = get_object_or_404(AttributDetails, pk=int(value['id']))
+                obj.value = value.get('value', obj.value)
+                obj.value_en = value.get('value', obj.value_en)
+                obj.value_ar = value.get('value', obj.value_ar)
+                obj.save()
         return instance
 
     class Meta:
         model = Attribut
-        fields = ('id', 'title', 'title_current', 'values', 'title_ar', 'title_en')
+        fields = ('id', 'title', 'title_current', 'values', 'title_ar', 'title_en', 'code')
 
 
 class AuctionOrderSerializer(serializers.ModelSerializer):
