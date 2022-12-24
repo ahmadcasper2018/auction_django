@@ -35,6 +35,8 @@ class AboutUs(TemplateView):
 
 
 def measure_similarity(list1, list2):
+    if not (list1 or list2):
+        return float(0)
     return len(set(list1) & set(list2)) / float(len(set(list1) | set(list2))) * 100
 
 
