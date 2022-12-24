@@ -400,6 +400,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "ar": instance.description_ar
         }
 
+    @transaction.atomic
     def create(self, validated_data):
         category = validated_data.pop('category', None)
         if not category:
@@ -451,12 +452,13 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.address = obj
                 instance.save()
         instance.address = obj
-        instance.save()
         ProductViewers.objects.create(
             product=instance
         )
+        instance.save()
         return instance
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         category = validated_data.pop('category', None)
         attrs = validated_data.pop('attrs', None)
@@ -468,8 +470,11 @@ class ProductSerializer(serializers.ModelSerializer):
             }
         )
         instance = super(ProductSerializer, self).update(instance, validated_data)
-        category_obj = get_object_or_404(Category, pk=int(category['id']))
-        instance.category = category_obj
+        if category:
+            category_obj = Category.objects.filter(pk=category['id']).first()
+            if not category_obj:
+                raise ValidationError(handle_404('invalid input', 'Category'))
+            instance.category = category_obj
         if attrs:
             instance.attrs.clear()
             for attr in attrs:
