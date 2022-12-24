@@ -208,8 +208,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super(ReviewViewSet, self).get_queryset()
-        if not (self.request.user.is_superuser or self.request.user.is_staff):
-            qs = qs.filter(user=self.request.user)
         return qs
 
 

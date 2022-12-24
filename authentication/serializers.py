@@ -14,13 +14,19 @@ from store.models import Product
 from .models import User, Wallet, Review, WishList
 
 
+class ReviewUserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'avatar')
+
+
 class UserPhonerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Phone
         fields = ('phone', 'type')
 
 
-class ReviewSubUserSerializer(serializers.ModelSerializer):
+class WalletSubUserSerializer(serializers.ModelSerializer):
     phones = UserPhonerSerializer(many=True)
 
     class Meta:
@@ -38,6 +44,9 @@ class WishListSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    user = ReviewUserSerializer(read_only=True)
+    createdat = serializers.DateTimeField(read_only=True)
+
     def create(self, validated_data):
         validated_data.update(
             {
@@ -48,7 +57,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'message', 'product')
+        fields = ('id', 'message', 'product', 'user', 'rate', 'createdat')
 
 
 class AddressSerializer(serializers.Serializer):
@@ -72,7 +81,7 @@ class UserReviewSerializer(serializers.ModelSerializer):
 
 
 class WalletLogSerializer(serializers.ModelSerializer):
-    user = ReviewSubUserSerializer(read_only=True)
+    user = WalletSubUserSerializer(read_only=True)
 
     class Meta:
         model = WalletLog
@@ -300,7 +309,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 
 class SubUserSerializer(ModelSerializer):
-    user = ReviewSubUserSerializer(read_only=True)
+    user = WalletSubUserSerializer(read_only=True)
 
     class Meta:
         model = Review

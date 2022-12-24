@@ -105,6 +105,7 @@ class Wallet(models.Model):
 
 class Review(models.Model):
     message = models.TextField()
+    rate = models.PositiveIntegerField(default=1)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -115,6 +116,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews',
     )
+    createdat = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return self.message
