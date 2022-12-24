@@ -198,7 +198,10 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
     attribut_value = serializers.SerializerMethodField(read_only=True)
 
     def get_attribut_title(self, instance):
-        return instance.attribut.title
+        if instance.attribut:
+            return instance.attribut.title
+        else:
+            return ''
 
     def get_attribut_value(self, instance):
         return instance.attribut.values.all().values('value')
