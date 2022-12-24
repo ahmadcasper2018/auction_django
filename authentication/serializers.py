@@ -198,7 +198,8 @@ class UserExtendedSerializer(UserSerializer):
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
     wallet = WalletSerializer(read_only=True)
-    user_role = serializers.CharField(write_only=True, required=True)
+    user_role = serializers.CharField(write_only=True, required=False)
+    gender = serializers.CharField(required=False)
 
     def validate(self, attrs):
         if attrs.get('user_role') not in ['admin', 'superuser', 'normal']:
@@ -208,11 +209,26 @@ class UserExtendedSerializer(UserSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        phones = validated_data.pop('phones')
-        addresses = validated_data.pop('addresses')
-        username = validated_data.pop('username')
+        phones = validated_data.pop('phones', None)
+        addresses = validated_data.pop('addresses', None)
+        username = validated_data.pop('username', None)
+        user_role = validated_data.pop('user_role', 'normal')
         if User.objects.filter(username=username):
             raise ValidationError({"User exist": "user with this name already exists!"})
+
+        is_superuser = False
+        is_staff = False
+        if user_role == 'superuser':
+            is_superuser = True
+            is_staff = True
+        elif user_role == 'admin':
+            is_staff = True
+        validated_data.update(
+            {
+                'is_staff': is_staff,
+                'is_superuser': is_superuser
+            }
+        )
 
         if phones:
             instance.phones.all().delete()
