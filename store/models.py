@@ -40,7 +40,14 @@ class AttributValue(models.Model):
 
 
 class Attribut(models.Model):
+    COLOR = 'color'
+    SIZE = 'size'
+    CODES = (
+        (COLOR, 'Color'),
+        (SIZE, 'size'),
+    )
     title = models.CharField(max_length=32)
+    code = models.CharField(max_length=20, choices=CODES, null=True)
 
     def __str__(self):
         return self.title
@@ -210,6 +217,15 @@ class Product(models.Model):
                 )
         return result
 
+    def attribute_values(self, code):
+        attrs = self.attrs.filter(attribut__code=code)
+        result = []
+        if not attrs:
+            return []
+        else:
+            result.extend([atr.flattern_values_current for atr in attrs])
+        return [j for sub in result for j in sub]
+
 
 class ProductAttribut(models.Model):
     values = models.ManyToManyField(
@@ -233,6 +249,14 @@ class ProductAttribut(models.Model):
         result = []
         for value in self.values.all():
             result.extend([value.value_en, value.value_ar])
+
+        return result
+
+    @property
+    def flattern_values_current(self):
+        result = []
+        for value in self.values.all():
+            result.append(value.value)
 
         return result
 

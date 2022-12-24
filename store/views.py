@@ -30,6 +30,10 @@ from django_filters import rest_framework as filters
 from django.views.generic.base import TemplateView
 
 
+def flate_2D(l):
+    return list(set([j for sub in l for j in sub]))
+
+
 class AboutUs(TemplateView):
     template_name = 'direct_request.html'
 
@@ -82,16 +86,29 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        cat_id = self.request.query_params.get('category', None)
         categories = Category.objects.all()
-        brands = [category.brands_list for category in categories]
-        brands_flatten = [j for sub in brands for j in sub]
-        brands_flatten = list(set(brands_flatten))
+        colors_flatten = []
+        sizes_flatten = []
+        brands_flatten = []
+        if cat_id:
+            categories = categories.filter(pk=cat_id).first()
+            colors = [i.attribute_values('color') for i in categories.products.all()]
+            sizes = [i.attribute_values('size') for i in categories.products.all()]
+            brands_flatten = categories.brands_list
+            colors_flatten = flate_2D(colors)
+            sizes_flatten = flate_2D(sizes)
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             data = self.get_paginated_response(serializer.data).data
             if brands_flatten:
                 data.update({'brands': brands_flatten})
+            if colors_flatten:
+                data.update({'colors': colors_flatten})
+            if sizes_flatten:
+                data.update({'sizes': sizes_flatten})
             return Response(data)
 
         serializer = self.get_serializer(queryset, many=True)

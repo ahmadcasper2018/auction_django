@@ -12,6 +12,7 @@ from location.models import Address, City
 from .models import Phone, WalletLog
 from store.models import Product
 from .models import User, Wallet, Review, WishList
+from phonenumber_field.validators import validate_international_phonenumber
 
 
 class ReviewUserSerializer(ModelSerializer):
@@ -68,6 +69,14 @@ class AddressSerializer(serializers.Serializer):
 
 class PhoneSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
+    phone = serializers.CharField()
+
+    def validate_phone(self, value):
+        try:
+            validate_international_phonenumber(value)
+            return value
+        except ValidationError:
+            raise ValidationError('please enter a valid phone number')
 
     class Meta:
         model = Phone
@@ -211,7 +220,7 @@ class UserExtendedSerializer(UserSerializer):
     gender = serializers.CharField(required=False)
 
     def validate(self, attrs):
-        if attrs.get('user_role') not in ['admin', 'superuser', 'normal']:
+        if attrs.get('user_role') and attrs.get('user_role') not in ['admin', 'superuser', 'normal']:
             raise ValidationError({"Invalid types": "You  have entered invalid type of users !"})
         if attrs.get('user_role') and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
@@ -240,7 +249,6 @@ class UserExtendedSerializer(UserSerializer):
         )
 
         if phones:
-            instance.phones.all().delete()
             for phone in phones:
                 obj, created = Phone.objects.get_or_create(user=instance, **phone)
                 obj.phone = phone.get('phone', obj.phone)
@@ -249,7 +257,6 @@ class UserExtendedSerializer(UserSerializer):
                 instance.phones.add(obj)
                 instance.save()
         if addresses:
-            instance.addresses.all().delete()
             for location in addresses:
                 obj, created = Address.objects.get_or_create(user=instance, **location)
                 obj.city = location.get('city', obj.city)
