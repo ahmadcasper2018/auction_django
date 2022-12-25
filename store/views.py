@@ -439,7 +439,7 @@ class PageViewSet(viewsets.ModelViewSet):
         contact_serializer = ContactSettingsSerializer(conatct)
         contacts = contact_serializer.data
         contacts.update(
-            {'logo': LogoSerializer(logo).data}
+            {'logo': MediaSerializer(logo).data}
         )
 
         data.update({
