@@ -89,12 +89,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         cat_id = self.request.query_params.get('category', None)
         categories = Category.objects.all()
         colors_flatten = []
+        response = {}
         sizes_flatten = []
         brands_flatten = []
         if cat_id:
             categories = categories.filter(pk=cat_id).first()
-            colors = [i.attribute_values('color') for i in categories.products.all()]
-            sizes = [i.attribute_values('size') for i in categories.products.all()]
+            orderd_products = categories.products.all().order_by('price')
+            minimum = orderd_products.first().price
+            maximum = orderd_products.last().price
+            response.update({
+                'min': minimum,
+                'max': maximum
+            })
+            colors = [i.attribute_values('color') for i in orderd_products]
+            sizes = [i.attribute_values('size') for i in orderd_products]
             brands_flatten = list(set(categories.brands_list))
             colors_flatten = flat_2D(colors)
             sizes_flatten = flat_2D(sizes)
@@ -114,7 +122,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         data = serializer.data
 
-        response = {"result": data}
+        response.update({"result": data})
         if brands_flatten:
             response.update({'brands': brands_flatten})
 
