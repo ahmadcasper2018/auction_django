@@ -90,6 +90,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         categories = Category.objects.all()
         colors_flatten = []
         response = {}
+        bounds = {}
         sizes_flatten = []
         brands_flatten = []
         if cat_id:
@@ -97,7 +98,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             orderd_products = categories.products.all().order_by('price')
             minimum = orderd_products.first().price
             maximum = orderd_products.last().price
-            response.update({
+            bounds.update({
                 'min': minimum,
                 'max': maximum
             })
@@ -111,6 +112,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             data = self.get_paginated_response(serializer.data).data
+            if bounds:
+                data.update(bounds)
             if brands_flatten:
                 data.update({'brands': brands_flatten})
             if colors_flatten:
