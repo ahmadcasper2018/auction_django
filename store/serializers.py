@@ -322,24 +322,29 @@ class CategorySerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        category_attrs = validated_data.pop('category_attrs', None)
+        categoty_attrs = validated_data.pop('category_attrs')
+        attrs = self.context['request'].data.get('category_attrs')
         instance = super(CategorySerializer, self).create(validated_data)
-        if category_attrs:
-            for attr in category_attrs:
-                new_obj = CategoryAttribute.objects.create(**attr)
-                new_obj.category = instance
-                new_obj.save()
-                instance.category_attrs.add(new_obj)
+        if attrs:
+            for attr in attrs:
+                attr = get_object_or_404(Attribut, pk=attr['id'])
+                obj, created = CategoryAttribute.objects.get_or_create(attribut=attr)
+                obj.category = instance
+                obj.save()
+                instance.category_attrs.add(obj)
             instance.save()
         return instance
 
     def update(self, instance, validated_data):
-        category_attrs = validated_data.pop('category_attrs', None)
+        categoty_attrs = validated_data.pop('category_attrs')
+        attrs = self.context['request'].data.get('category_attrs')
+
         instance = super(CategorySerializer, self).update(instance, validated_data)
-        if category_attrs:
+        if attrs:
             instance.category_attrs.clear()
-            for attr in category_attrs:
-                obj, created = CategoryAttribute.objects.get_or_create(**attr)
+            for attr in attrs:
+                attr = get_object_or_404(Attribut, pk=attr['id'])
+                obj, created = CategoryAttribute.objects.get_or_create(attribut=attr)
                 obj.category = instance
                 obj.save()
                 instance.category_attrs.add(obj)
