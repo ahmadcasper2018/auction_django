@@ -295,6 +295,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     childs = SubCategorySerializer(many=True, read_only=True)
+    brands = BrandSerializer(read_only=True,many=True)
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)

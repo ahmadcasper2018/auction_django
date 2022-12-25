@@ -47,6 +47,10 @@ class WishListSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     user = ReviewUserSerializer(read_only=True)
     createdat = serializers.DateTimeField(read_only=True)
+    product_current = serializers.SerializerMethodField(read_only=True)
+
+    def get_product_current(self, instance):
+        return instance.product.title
 
     def create(self, validated_data):
         validated_data.update(
@@ -58,7 +62,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'message', 'product', 'user', 'rate', 'createdat')
+        fields = ('id', 'message', 'product', 'user', 'rate', 'createdat', 'product_current')
 
 
 class AddressSerializer(serializers.Serializer):

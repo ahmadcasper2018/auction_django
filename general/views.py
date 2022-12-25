@@ -37,3 +37,8 @@ class ContactSettingsViewSet(mixins.RetrieveModelMixin,
     queryset = ContactSettings.objects.all()
     serializer_class = ContactSettingsSerializer
     permission_classes = (SettingsAccress,)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response([serializer.data])
