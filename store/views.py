@@ -129,7 +129,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         if brands:
             brands = brands.split(',')
-            queryset = queryset.filter(brand__in=brands)
+            queryset = queryset.filter(brand__title__in=brands)
         if cat_id:
             queryset = queryset.filter(category__pk=int(cat_id))
         # if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
