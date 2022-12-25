@@ -409,7 +409,8 @@ class PageViewSet(viewsets.ModelViewSet):
         if page_type:
             queryset = queryset.filter(page_type=page_type).first()
             if page_type != 'home':
-                products = Category.objects.get(code=page_type).products.all().order_by('-views__viewers')
+                products = Product.objects.filter(category__code=page_type).order_by('-views__viewers')
+
             else:
                 products = Product.objects.all().order_by('-views__viewers')
             sales = products.filter(sale=True)
