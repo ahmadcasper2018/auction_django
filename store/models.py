@@ -166,17 +166,19 @@ class Product(models.Model):
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     current_price = models.DecimalField(
+        null=True,
         max_digits=10,
         decimal_places=3,
     )
     increase_amount = models.DecimalField(
+        null=True,
         max_digits=10,
         decimal_places=3,
         validators=[MinValueValidator(Decimal('0.001'))])
     active = models.BooleanField(default=True)
     amount = models.PositiveIntegerField(null=True, blank=True)
-    start_time = models.DateTimeField(null=True, blank=False)
-    end_time = models.DateTimeField(null=True, blank=False)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
     reject_message = models.CharField(max_length=512, null=True)
     new = models.BooleanField(default=False)
