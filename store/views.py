@@ -442,7 +442,7 @@ class PageViewSet(viewsets.ModelViewSet):
         file_path = ''
         prefix = "https://wabel.incareg.com"
         logo_data = MediaSerializer(logo).data
-        if logo.file:
+        if logo:
             file_path = prefix + logo_data['file']
         logo_data['file'] = file_path
         contacts.update(
