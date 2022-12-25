@@ -254,6 +254,7 @@ class UserExtendedSerializer(UserSerializer):
 
         if phones:
             instance.phones.all().delete()
+            Phone.objects.filter(user=user).delete()
             for phone in phones:
                 obj, created = Phone.objects.get_or_create(user=instance, **phone)
                 obj.phone = phone.get('phone', obj.phone)
