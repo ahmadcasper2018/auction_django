@@ -412,7 +412,7 @@ class PageViewSet(viewsets.ModelViewSet):
                 products = Category.objects.get(code=page_type).products.all().order_by('-views__viewers')
             else:
                 products = Product.objects.all().order_by('-views__viewers')
-            sales = products.filter(discount__gt=0)
+            sales = products.filter(sale=True)
             news = products.filter(new=True)
         if sales and len(sales) > 10:
             sales = sales[:10]
