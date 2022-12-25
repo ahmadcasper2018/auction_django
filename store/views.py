@@ -439,9 +439,11 @@ class PageViewSet(viewsets.ModelViewSet):
         conatct = ContactSettings.objects.first()
         contact_serializer = ContactSettingsSerializer(conatct)
         contacts = contact_serializer.data
+        file_path = ''
         prefix = "https://wabel.incareg.com"
         logo_data = MediaSerializer(logo).data
-        file_path = prefix + logo_data['file']
+        if logo.file:
+            file_path = prefix + logo_data['file']
         logo_data['file'] = file_path
         contacts.update(
             {'logo': logo_data}
