@@ -68,7 +68,6 @@ class AddressSerializer(serializers.Serializer):
 
 
 class PhoneSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
     phone = serializers.CharField()
 
     def validate_phone(self, value):
@@ -80,7 +79,7 @@ class PhoneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Phone
-        fields = ('id', 'phone', 'type')
+        fields = ('phone', 'type')
 
 
 class UserReviewSerializer(serializers.ModelSerializer):
@@ -227,11 +226,12 @@ class UserExtendedSerializer(UserSerializer):
         return attrs
 
     def update(self, instance, validated_data):
+        user = self.context['request'].user
         phones = validated_data.pop('phones', None)
         addresses = validated_data.pop('addresses', None)
         username = validated_data.pop('username', None)
         user_role = validated_data.pop('user_role', 'normal')
-        if User.objects.filter(username=username):
+        if User.objects.filter(username=username).exclude(pk=user.pk):
             raise ValidationError({"User exist": "user with this name already exists!"})
 
         is_superuser = False
@@ -249,6 +249,7 @@ class UserExtendedSerializer(UserSerializer):
         )
 
         if phones:
+            instance.phones.all().delete()
             for phone in phones:
                 obj, created = Phone.objects.get_or_create(user=instance, **phone)
                 obj.phone = phone.get('phone', obj.phone)
