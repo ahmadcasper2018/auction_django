@@ -259,7 +259,7 @@ class ProductAttributSerializer(serializers.ModelSerializer):
 class ProductAttributSubSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(read_only=True)
     values = AttributeValueSerializer(many=True, read_only=True)
-    title_current = serializers.CharField(read_only=True, source='title')
+    title_current = serializers.SerializerMethodField(read_only=True)
     code = serializers.SerializerMethodField()
 
     def get_code(self, instance):
@@ -269,6 +269,11 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
         return {
             "en": instance.attribut.title_en,
             "ar": instance.attribut.title_ar
+        }
+
+    def get_title_current(self, instance):
+        return {
+            "title_current": instance.attribut.title
         }
 
     class Meta:
