@@ -13,7 +13,7 @@ from location.models import Address
 
 
 class Logo(models.Model):
-    file = models.FileField(upload_to='images/logo/')
+    file = models.FileField(upload_to='images/logo/%Y/%m/%d')
 
 
 class Page(models.Model):
@@ -290,6 +290,7 @@ class Media(models.Model):
     )
     alt = models.CharField(max_length=32, null=True)
     value = models.CharField(max_length=64, null=True)
+    is_logo = models.BooleanField(default=False)
 
     @property
     def type(self):

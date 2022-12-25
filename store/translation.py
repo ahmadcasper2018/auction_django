@@ -1,4 +1,6 @@
 from modeltranslation.translator import translator, TranslationOptions
+
+from general.models import KeyWord, Question
 from .models import (
     Attribut,
     AttributDetails,
@@ -55,6 +57,16 @@ class PageTranslationOptions(TranslationOptions):
     required_languages = ('en', 'ar')
 
 
+class KeyWordTranslationOptions(TranslationOptions):
+    fields = ('keyword',)
+    required_languages = ('en', 'ar')
+
+
+class QuestionTranslationOptions(TranslationOptions):
+    fields = ('question', 'answer')
+    required_languages = ('en', 'ar')
+
+
 translator.register(Attribut, AttributTranslationOptions)
 translator.register(AttributDetails, AttributDetailsTranslationOptions)
 translator.register(Product, ProductTranslationOptions)
@@ -64,3 +76,5 @@ translator.register(Brand, BrandTranslationOptions)
 translator.register(Slider, SliderTranslationOptions)
 translator.register(AttributValue, AttributValueTranslationOptions)
 translator.register(Page, PageTranslationOptions)
+translator.register(KeyWord, KeyWordTranslationOptions)
+translator.register(Question, QuestionTranslationOptions)

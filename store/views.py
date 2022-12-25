@@ -401,10 +401,17 @@ class PageViewSet(viewsets.ModelViewSet):
         news = Product.objects.none()
         popular = Product.objects.none()
         sales = Product.objects.none()
+        try:
+            logo = Media.objects.filter(is_logo=True).last()
+        except Logo.DoesNotExist:
+            raise ValidationError('please enter a valid logo first')
         page_type = self.request.query_params.get('page_type', None)
         if page_type:
             queryset = queryset.filter(page_type=page_type).first()
-            products = Category.objects.get(code=page_type).products.all().order_by('-views__viewers')
+            if page_type != 'home':
+                products = Category.objects.get(code=page_type).products.all().order_by('-views__viewers')
+            else:
+                products = Product.objects.all().order_by('-views__viewers')
             sales = products.filter(discount__gt=0)
             news = products.filter(new=True)
         if sales and len(sales) > 10:
@@ -430,9 +437,13 @@ class PageViewSet(viewsets.ModelViewSet):
                     }
         conatct = ContactSettings.objects.first()
         contact_serializer = ContactSettingsSerializer(conatct)
+        contacts = contact_serializer.data
+        contacts.update(
+            {'logo': LogoSerializer(logo).data}
+        )
 
         data.update({
-            'contact_settings': contact_serializer.data
+            'contact_settings': contacts
         })
         return Response(data)
 
