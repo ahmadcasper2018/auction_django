@@ -330,7 +330,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        categoty_attrs = validated_data.pop('category_attrs')
+        categoty_attrs = validated_data.pop('category_attrs', None)
         attrs = self.context['request'].data.get('category_attrs')
         instance = super(CategorySerializer, self).create(validated_data)
         if attrs:
@@ -344,7 +344,7 @@ class CategorySerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        categoty_attrs = validated_data.pop('category_attrs')
+        categoty_attrs = validated_data.pop('category_attrs', None)
         attrs = self.context['request'].data.get('category_attrs')
 
         instance = super(CategorySerializer, self).update(instance, validated_data)
@@ -710,7 +710,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return final_cost
 
     def create(self, validated_data):
-        product_orders = validated_data.pop('product_orders')
+        product_orders = validated_data.pop('product_orders',None)
         validated_data.update({"user": self.context['request'].user})
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
@@ -728,7 +728,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        product_orders = validated_data.pop('product_orders')
+        product_orders = validated_data.pop('product_orders',None)
         instance = super(OrderSerializer, self).update(instance, validated_data)
         for product_order in product_orders:
             item = get_object_or_404(ProductOrder, pk=product_order.pop('id'))
