@@ -176,7 +176,6 @@ class SliderSerializer(serializers.ModelSerializer):
         if media_file:
             media_obj = get_object_or_404(SliderMedia, pk=media_file)
             instance.slider_media = media_obj
-            instance.save()
         instance.save()
         return instance
 
@@ -295,7 +294,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     childs = SubCategorySerializer(many=True, read_only=True)
-    brands = BrandSerializer(read_only=True,many=True)
+    brands = BrandSerializer(read_only=True, many=True)
     category_attrs = CategoryAttributSerializer(many=True, required=False)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
@@ -333,7 +332,7 @@ class CategorySerializer(serializers.ModelSerializer):
                 obj.category = instance
                 obj.save()
                 instance.category_attrs.add(obj)
-            instance.save()
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):
@@ -349,7 +348,7 @@ class CategorySerializer(serializers.ModelSerializer):
                 obj.category = instance
                 obj.save()
                 instance.category_attrs.add(obj)
-            instance.save()
+        instance.save()
         return instance
 
     class Meta:
@@ -467,13 +466,11 @@ class ProductSerializer(serializers.ModelSerializer):
                 if not media_obj:
                     raise ValidationError(handle_404('invalid input', 'media'))
                 instance.media.add(media_obj)
-                instance.save()
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
                 obj = Address.objects.create(**address)
                 instance.address = obj
-                instance.save()
         instance.address = obj
         ProductViewers.objects.create(
             product=instance
@@ -515,14 +512,12 @@ class ProductSerializer(serializers.ModelSerializer):
             for file_id in media_files:
                 media_obj = get_object_or_404(Media, pk=int(file_id))
                 instance.media.add(media_obj)
-                instance.save()
         obj = instance.address
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
                 obj = Address.objects.create(**address)
                 instance.address = obj
-                instance.save()
         instance.address = obj
         instance.save()
         return instance
@@ -580,7 +575,7 @@ class AttributSerializer(serializers.ModelSerializer):
             obj.attribut = instance
             obj.save()
             instance.values.add(obj)
-            instance.save()
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):
@@ -646,12 +641,12 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
             send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
                       ['ahmadc@gmail.com'])
 
-        instance.save()
         new_order.auction_orders.add(instance)
         auction_product.auction_orders.add(instance)
         new_order.save()
         auction_product.save()
         OrderLog.objects.create(order=instance, auctions=True)
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):
@@ -718,11 +713,10 @@ class OrderSerializer(serializers.ModelSerializer):
             if new_pd.product.product_type in ['bazaar', 'shops']:
                 new_pd.product.amount = new_pd.product.amount - quantity
                 new_pd.product.save()
-                instance.save()
             instance.product_orders.add(new_pd)
-            instance.save()
 
         OrderLog.objects.create(order=instance, auctions=False)
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):
@@ -759,6 +753,7 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
         location, created = Address.objects.get_or_create(**address)
         validated_data.update({"address": location})
         instance = super(ShippingCompanySerializer, self).create(validated_data)
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):

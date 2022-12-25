@@ -54,6 +54,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         for key in keywords:
             new_keyword, created = KeyWord.objects.get_or_create(pk=key)
             instance.keyword.add(new_keyword)
+        instance.save()
         return instance
 
     class Meta:

@@ -260,7 +260,6 @@ class UserExtendedSerializer(UserSerializer):
                 obj.type = phone.get('type', obj.phone)
                 obj.save()
                 instance.phones.add(obj)
-                instance.save()
         if addresses:
             for location in addresses:
                 obj, created = Address.objects.get_or_create(user=instance, **location)
@@ -268,7 +267,8 @@ class UserExtendedSerializer(UserSerializer):
                 obj.address = location.get('address', obj.address)
                 obj.save()
                 instance.addresses.add(obj)
-                instance.save()
+
+        instance.save()
         return super(UserExtendedSerializer, self).update(instance, validated_data)
 
     class Meta(UserSerializer.Meta):
