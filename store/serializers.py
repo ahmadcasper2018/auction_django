@@ -272,9 +272,7 @@ class ProductAttributSubSerializer(serializers.ModelSerializer):
         }
 
     def get_title_current(self, instance):
-        return {
-            "title_current": instance.attribut.title
-        }
+        return instance.attribut.title
 
     class Meta:
         model = ProductAttribut
