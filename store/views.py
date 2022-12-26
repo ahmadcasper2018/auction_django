@@ -1,6 +1,7 @@
 import random
 
 from django.core.files import File
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import viewsets, status
@@ -385,7 +386,8 @@ class BrandViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get('category', None)
         qs = super(BrandViewSet, self).get_queryset()
         if category:
-            qs = qs.filter(category__pk=category)
+            category = get_object_or_404(Category, pk=category)
+            qs = qs.filter(Q(category=category) | Q(products__category=category))
         return qs
 
 
