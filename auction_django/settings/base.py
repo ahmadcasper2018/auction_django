@@ -211,17 +211,18 @@ LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '643689312750-t2o06qlovpc911he0fmut7c37ahppj09.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://wabel.incareg.com",
-    "https://wabel.incareg.com",
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-    "https://localhost:4200",
-    "https://127.0.0.1:4200",
-    "https://front-wabel.incareg.com",
-    "http://front-wabel.incareg.com"
-
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://wabel.incareg.com",
+#     "https://wabel.incareg.com",
+#     "http://localhost:4200",
+#     "http://127.0.0.1:4200",
+#     "https://localhost:4200",
+#     "https://127.0.0.1:4200",
+#     "https://front-wabel.incareg.com",
+#     "http://front-wabel.incareg.com"
+#
+# ]
+CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_METHODS = [
     "DELETE",
