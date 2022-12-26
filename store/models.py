@@ -81,7 +81,7 @@ class Category(SoftDeleteModel):
     active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='images/category/%Y/%m/%d', blank=True, null=True)
     banner = models.ImageField(upload_to='images/category/banners/%Y/%m/%d', blank=True, null=True)
-    code = models.CharField(max_length=12, choices=CODE_TYPES, null=True)
+    code = models.CharField(max_length=12, choices=CODE_TYPES, null=True, blank=True)
     objects = CategoryManager()
 
     @property
