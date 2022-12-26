@@ -28,7 +28,7 @@ from .serializers import (
     WalletSerializer,
     UserExtendedSerializer,
     ReviewSerializer,
-    WishListSerializer, WalletLogSerializer
+    WishListSerializer
 )
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
@@ -250,7 +250,7 @@ class WishListViewSet(viewsets.ModelViewSet):
 
 class WalletLogView(viewsets.ReadOnlyModelViewSet):
     queryset = WalletLog.objects.all()
-    serializer_class = WalletLogSerializer
+    serializer_class = WalletSerializer
 
     def get_queryset(self):
         user = self.request.user
