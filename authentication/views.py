@@ -248,6 +248,16 @@ class WishListViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class WalletLogView(viewsets.ModelViewSet):
+class WalletLogView(viewsets.ReadOnlyModelViewSet):
     queryset = WalletLog.objects.all()
     serializer_class = WalletSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        user_filter = self.request.query_params.get('user')
+        qs = super(WalletLogView, self).get_queryset()
+        if (user.is_superuser or user.is_staff) and user_filter:
+            qs = qs.filter(pk=user_filter)
+        if not (user.is_superuser or user.is_staff):
+            return qs.filter(user=user)
+        return qs
