@@ -257,7 +257,7 @@ class WalletLogView(viewsets.ReadOnlyModelViewSet):
         user_filter = self.request.query_params.get('user')
         qs = super(WalletLogView, self).get_queryset()
         if (user.is_superuser or user.is_staff) and user_filter:
-            qs = qs.filter(pk=user_filter)
+            qs = qs.filter(wallet__userpk=user_filter)
         if not (user.is_superuser or user.is_staff):
-            return qs.filter(user=user)
+            return qs.filter(wallet__user=user)
         return qs
