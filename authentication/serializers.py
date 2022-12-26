@@ -155,7 +155,7 @@ class UserCreationSerializer(UserCreateSerializer):
 
     def validate(self, attrs):
         required_role = attrs.get('user_role')
-        if required_role not in ['admin', 'superuser', 'normal']:
+        if required_role and required_role not in ['admin', 'superuser', 'normal']:
             raise ValidationError('please enter a valid user type to create !')
 
         if not attrs.get('phones') or len(attrs.get('phones')) == 0:
@@ -163,7 +163,7 @@ class UserCreationSerializer(UserCreateSerializer):
 
         if not attrs.get('addresses') or len(attrs.get('addresses')) == 0:
             raise ValidationError('please enter at least one valid address !')
-        if (required_role in ['admin', 'superuser'] or attrs.get('is_active')) \
+        if (required_role and required_role in ['admin', 'superuser'] or attrs.get('is_active')) \
                 and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
 
