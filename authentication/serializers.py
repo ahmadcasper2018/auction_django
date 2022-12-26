@@ -148,7 +148,7 @@ class UserCreationSerializer(UserCreateSerializer):
     is_active = serializers.BooleanField(write_only=True, required=False)
     reviews = UserReviewSerializer(many=True, read_only=True)
     wishlist = WishListSerializer(many=True, read_only=True)
-    user_role = serializers.CharField(max_length=10, write_only=True, required=True)
+    user_role = serializers.CharField(max_length=10, write_only=True, required=False)
 
     def get_role(self, instance):
         return instance.role
