@@ -381,6 +381,13 @@ class BrandViewSet(viewsets.ModelViewSet):
     serializer_class = BrandSerializer
     permission_classes = (BrandPermession,)
 
+    def get_queryset(self):
+        category = self.request.query_params.get('category', None)
+        qs = super(BrandViewSet, self).get_queryset()
+        if category:
+            qs = qs.filter(category__pk=category)
+        return qs
+
 
 class SliderViewSet(viewsets.ModelViewSet):
     queryset = Slider.objects.all()

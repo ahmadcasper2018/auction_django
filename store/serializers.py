@@ -311,6 +311,10 @@ class CategorySerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField(required=False)
     title_ar = serializers.CharField(write_only=True)
     title_en = serializers.CharField(write_only=True)
+    parent_current = serializers.SerializerMethodField()
+
+    def get_parent_current(self, instance):
+        return instance.parent_title
 
     def validate(self, attrs):
         code = attrs.get('code', None)
@@ -710,7 +714,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return final_cost
 
     def create(self, validated_data):
-        product_orders = validated_data.pop('product_orders',None)
+        product_orders = validated_data.pop('product_orders', None)
         validated_data.update({"user": self.context['request'].user})
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
@@ -728,7 +732,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        product_orders = validated_data.pop('product_orders',None)
+        product_orders = validated_data.pop('product_orders', None)
         instance = super(OrderSerializer, self).update(instance, validated_data)
         for product_order in product_orders:
             item = get_object_or_404(ProductOrder, pk=product_order.pop('id'))
