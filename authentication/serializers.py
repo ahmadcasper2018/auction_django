@@ -223,11 +223,21 @@ class UserExtendedSerializer(UserSerializer):
     gender = serializers.CharField(required=False)
 
     def validate(self, attrs):
-        if attrs.get('user_role') and attrs.get('user_role') not in ['admin', 'superuser', 'normal']:
+        user = self.context['request'].user
+        target_username = User.objects.filter(username=attrs.get('username'))
+        if not user.is_superuser:
+            if target_username.exclude(pk=user.pk):
+                raise ValidationError({"User exist": "user with this name already exists!"})
+        else:
+            if len(target_username) > 1:
+                raise ValidationError({"User exist": "user with this name already exists!"})
+
+        if attrs.get('user_role') and attrs.get('user_role') not in ['admin', 'super_admin', 'normal']:
             raise ValidationError({"Invalid types": "You  have entered invalid type of users !"})
         if attrs.get('user_role') and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
         return attrs
+
 
     def update(self, instance, validated_data):
         user = self.context['request'].user
