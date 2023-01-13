@@ -271,13 +271,77 @@ class AuctionOrderRequestViewSet(viewsets.ModelViewSet):
     serializer_class = AuctionOrderSerializer
     permission_classes = (IsAuthenticated,)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
+    @action(detail=False, methods=['post', 'get', 'delete'])
+    def handle_request(self, request):
+        if request.method == 'POST':
+            validated_data = self.request.data
+            user = self.request.user
+            increase_amount = validated_data.get('increase_amount', None)
+            increase_user = validated_data.get('increase_user', None)
+            directed = validated_data.get('directed', False)
+            auction_product = Product.objects.get(pk=validated_data.get('auction_product'))
+
+            errors = {}
+
+            if auction_product.auction_success:
+                errors[
+                    "auction_product"] = "these product was bought successfully"
+
+            if not (increase_amount or increase_user or directed):
+                errors[
+                    "auction_product"] = "You have to enter amount to increas or press the adding button"
+
+            if directed:
+                if not (user.wallet.amount >= auction_product.price):
+                    errors["direct payment"] = "You don't have enough funds in your wallet"
+
+            if errors:
+                raise serializers.ValidationError(errors)
+            else:
+                current_product = Product.objects.get(pk=validated_data.get('auction_product'))
+                max_payment = current_product.current_price
+                if not user.auction_requests.filter(auction_product=validated_data.get('auction_product')):
+                    instance = AuctionOrder.objects.create(
+                        auction_product=current_product,
+                        direct=validated_data.get('directed', False),
+                        current_payment=max_payment,
+                        user=user
+                    )
+                else:
+                    instance = user.auction_requests.get(auction_product=validated_data.get('auction_product'))
+                increase_amount = validated_data.get('increase_amount', None)
+                increase_user = validated_data.get('increase_user', None)
+                if increase_amount:
+                    instance.current_payment += increase_amount
+                    current_product.current_price += increase_amount
+                elif increase_user:
+                    instance.current_payment += increase_user
+                    current_product.current_price += increase_user
+                elif directed:
+                    if not (user.wallet.amount >= current_product.price):
+                        raise ValidationError('you dont have enough money to buy this product')
+                    else:
+                        user.wallet.amount -= current_product.price
+                        user.wallet.save()
+                        current_product.auction_success = True
+                        instance.status = AuctionOrder.APPROVED
+                        current_product.save()
+                instance.status = AuctionOrder.PENDING
+                if current_product.current_price >= current_product.price:
+                    if not (user.wallet.amount >= current_product.price):
+                        raise ValidationError('you dont have enough money to buy this product')
+                    else:
+                        user.wallet.amount -= current_product.price
+                        user.wallet.save()
+                        user.save()
+                        current_product.auction_success = True
+                        instance.status = AuctionOrder.APPROVED
+                        instance.save()
+                        current_product.save()
+
+                current_product.save()
+                instance.save()
+                return Response(data=self.serializer_class(instance).data, status=200)
 
     def get_queryset(self):
         qs = super(AuctionOrderRequestViewSet, self).get_queryset()

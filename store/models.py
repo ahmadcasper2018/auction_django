@@ -8,6 +8,7 @@ from django.conf import settings
 from django_softdelete.models import SoftDeleteModel
 from django_extensions.db.models import TimeStampedModel
 
+
 from .managers import CategoryManager
 from location.models import Address
 
@@ -191,6 +192,8 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=1)
     sale = models.BooleanField(default=False)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    auction = models.BooleanField(default=False)
+    auction_success = models.BooleanField(default=False)
 
     @property
     def product_type(self):
@@ -453,6 +456,15 @@ class Slider(models.Model):
 
 
 class AuctionOrder(models.Model):
+    APPROVED = 'approved'
+    PENDING = 'pending'
+    EXPIRED = 'expired'
+    STATUS = (
+        (APPROVED, 'approved'),
+        (PENDING, 'pending'),
+        (EXPIRED, 'expired'),
+
+    )
     auction_product = models.ForeignKey(
         Product,
         related_name='auction_orders',
@@ -461,15 +473,17 @@ class AuctionOrder(models.Model):
 
     )
 
-    order_product = models.ForeignKey(
-        Order,
-        related_name='auction_orders',
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='auction_requests',
         on_delete=models.SET_NULL,
         null=True,
 
     )
+
     direct = models.BooleanField(default=False)
     current_payment = models.DecimalField(max_digits=10, decimal_places=3, default=0)
+    status = models.CharField(max_length=20, null=True, choices=STATUS)
 
 
 class ProductViewers(models.Model):
@@ -479,3 +493,23 @@ class ProductViewers(models.Model):
         related_name="views",
     )
     viewers = models.PositiveIntegerField(default=0)
+
+
+class AuctionLog(TimeStampedModel):
+    by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="auctions_logs",
+        null=True,
+        blank=True,
+    )
+    request = models.ForeignKey(
+        AuctionOrder,
+        on_delete=models.SET_NULL,
+        related_name="auctions_logs",
+        null=True,
+        blank=True,
+    )
+
+    direct = models.BooleanField(default=False)
+

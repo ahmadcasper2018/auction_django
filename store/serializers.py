@@ -610,78 +610,35 @@ class AttributSerializer(serializers.ModelSerializer):
 class AuctionOrderSerializer(serializers.ModelSerializer):
     current_payment = serializers.DecimalField(read_only=True, decimal_places=3, max_digits=10)
     directed = serializers.BooleanField(required=False)
-    auction_order = serializers.PrimaryKeyRelatedField(
-        queryset=Order.objects.all(),
-        required=False
-    )
     status = serializers.CharField(read_only=True)
+    increase_amount = serializers.BooleanField(write_only=True)
     increase_user = serializers.DecimalField(max_digits=10, decimal_places=3, write_only=True, required=False)
 
-    def create(self, validated_data):
+    def validate(self, data):
         request = self.context['request']
-        validated_data.update({"user": request.user})
-        address = request.data.get('address', None)
-        direct = validated_data.get('directed', False)
-        address = get_object_or_404(Address, pk=address)
-        auction_product = validated_data.get('auction_product')
-        max_payment = auction_product.current_price
-        new_order = Order.objects.create(
-            user=request.user,
-            address=address,
-            status=Order.PENDING)
-        instance = AuctionOrder.objects.create(
-            order_product=new_order,
-            auction_product=auction_product,
-            direct=direct,
-            current_payment=max_payment
-        )
-
-        # new_order.auction_orders.add(instance)
-        increase_amount = request.data.get('increase_amount', None)
-        increase_user = validated_data.get('increase_user', None)
+        user = request.user
+        increase_amount = data.get('increase_amount', None)
+        increase_user = data.get('increase_user', None)
+        directed = data.get('directed', False)
+        auction_product = data.get('auction_product')
+        address = data.get('address')
+        errors = {}
+        if not address:
+            errors['address'] = "you must enter a valid address"
+        if not directed and not increase_amount and not increase_user:
+            errors[
+                "auction_product"] = "You must either place a bid, increase the bid by a certain amount, or buy it directly"
         if increase_amount:
-            new_value = max_payment + auction_product.increase_amount
-            if request.user.wallet.amount >= new_value:
-                instance.current_payment = new_value
-                auction_product.current_price += auction_product.increase_amount
+            new_value = auction_product.current_price + increase_amount
+            if user.wallet.amount < new_value:
+                errors["increase_amount"] = "You don't have enough funds in your wallet"
         elif increase_user:
-            new_value = max_payment + increase_user
-            if request.user.wallet.amount >= new_value:
-                instance.current_payment = new_value
-                auction_product.current_price += increase_user
-        elif direct and request.user.wallet.amount >= instance.auction_product.price:
-            send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
-                      ['ahmadc@gmail.com'])
-
-        new_order.auction_orders.add(instance)
-        auction_product.auction_orders.add(instance)
-        new_order.save()
-        auction_product.save()
-        OrderLog.objects.create(order=instance, auctions=True)
-        instance.save()
-        return instance
-
-    def update(self, instance, validated_data):
-        request = self.context['request']
-        direct = validated_data.get('directed', False)
-        increase_amount = request.data.get('increase_amount', None)
-        increase_user = validated_data.get('increase_user', None)
-        max_payment = instance.current_price
-        if increase_amount:
-            new_value = max_payment + instance.increase_amount
-            if request.user.wallet.amount >= new_value:
-                instance.current_payment = new_value
-                instance.current_price += instance.increase_amount
-        elif increase_user:
-            new_value = max_payment + increase_user
-            if request.user.wallet.amount >= new_value:
-                instance.current_payment = new_value
-                instance.current_price += increase_user
-        elif direct and request.user.wallet.amount >= instance.auction_product.price:
-            send_mail('New Direct payemnt request', 'A stunning message', settings.EMAIL_HOST_USER,
-                      ['ahmadc@gmail.com'])
-        instance.save()
-        return instance
+            new_value = auction_product.current_price + increase_user
+            if user.wallet.amount < new_value:
+                errors["increase_user"] = "You don't have enough funds in your wallet"
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
 
     class Meta:
         model = AuctionOrder
