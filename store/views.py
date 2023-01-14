@@ -370,8 +370,13 @@ class MediaViewSet(viewsets.ModelViewSet):
     queryset = Media.objects.all()
     serializer_class = MediaSerializer
 
-    # def get_queryset(self):
-    #     return super(MediaViewSet, self).get_queryset().filter(product__user=self.request.user)
+    def get_queryset(self):
+        qs = super(MediaViewSet, self).get_queryset()
+        product_id = self.request.query_params.get('product_id', None)
+        if product_id:
+            qs = qs.filter(product__pk=product_id)
+
+        return qs
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

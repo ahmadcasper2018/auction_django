@@ -144,7 +144,7 @@ class MediaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('id', 'file', 'type', 'attributes', 'alt', 'value')
+        fields = ('id', 'file', 'type', 'attributes', 'alt', 'value', 'product')
 
 
 class LogoSerializer(serializers.ModelSerializer):
@@ -753,7 +753,7 @@ class OrderSerializer(serializers.ModelSerializer):
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
             product_id = product_order.pop('product', None)
-            values = product_order.get('values')
+            values = product_order.pop('values')
             value_objs = AttributDetails.objects.filter(pk__in=values)
             product = Product.objects.get(pk=product_id)
             quantity = product_order.get('quantity', 1)
@@ -761,7 +761,6 @@ class OrderSerializer(serializers.ModelSerializer):
             new_pd.order = instance
             for value in value_objs:
                 new_pd.attrs.add(value)
-                new_pd.save()
 
             new_pd.product.amount = new_pd.product.amount - quantity
             new_pd.product.save()
@@ -769,6 +768,7 @@ class OrderSerializer(serializers.ModelSerializer):
             new_pd.save()
             instance.product_orders.add(new_pd)
             user.wallet.amount -= product.price
+            user.wallet.save()
             user.save()
         OrderLog.objects.create(order=instance)
         instance.status = Order.PENDING
@@ -803,7 +803,6 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
             "en": instance.name_en,
             "ar": instance.name_ar
         }
-
 
     def create(self, validated_data):
         address = validated_data.pop('address')
