@@ -7,7 +7,7 @@ from django.conf import settings
 
 from django_softdelete.models import SoftDeleteModel
 from django_extensions.db.models import TimeStampedModel
-
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .managers import CategoryManager
 from location.models import Address
@@ -60,6 +60,13 @@ class AttributDetails(models.Model):
         Attribut,
         related_name='values',
         on_delete=models.CASCADE,
+    )
+    order = models.ForeignKey(
+        'ProductOrder',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attrs'
     )
 
     def __str__(self):
@@ -342,12 +349,12 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
-    address = models.ForeignKey(
-        Address,
-        related_name='orders',
-        on_delete=models.CASCADE
-    )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
+    address = models.CharField(max_length=128, null=True)
+    lang = models.CharField(max_length=128, null=True)
+    lat = models.CharField(max_length=128, null=True)
+    phone = PhoneNumberField(null=True, blank=False)
+    zip = models.CharField(max_length=24, null=True)
 
     def __str__(self):
         return f'order by {self.user} shipped with {self.shipping_company}'

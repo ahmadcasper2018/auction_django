@@ -38,7 +38,6 @@ def handle_404(message, field):
     }
 
 
-
 def create_error(field, error):
     response = {'message': f"Invalid {field}"}
     response.update(
@@ -49,6 +48,7 @@ def create_error(field, error):
         }
     )
     return response
+
 
 # from authentication.serializers import UserProductSerializer
 class AttributeValueSerializer(serializers.ModelSerializer):
@@ -383,6 +383,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductOrderSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     price = serializers.SerializerMethodField(read_only=True)
+    attrs = AttributDetailsSerializer(read_only=True, many=True)
 
     # product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     # directed_bazar = serializers.BooleanField()
@@ -697,21 +698,46 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField(read_only=True)
-    product_orders = ProductOrderSerializer(many=True)
+    product_orders = ProductOrderSerializer(read_only=True, many=True)
+    status = serializers.CharField(read_only=True)
     username = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
-    location = serializers.SerializerMethodField()
     shipping_company = serializers.PrimaryKeyRelatedField(queryset=ShippingCompany.objects.all(), write_only=True)
-    address = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), write_only=True)
+    lang = serializers.CharField(required=True)
+    lat = serializers.CharField(required=True)
+    address = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+
+        product_orders = self.context['request'].data.get('product_orders', None)
+        end_price = 0
+        user = self.context['request'].user
+        if not product_orders:
+            raise ValidationError(create_error('Invalid Input', 'product_orders'))
+        else:
+            for data in product_orders:
+                product_id = data.get("product", None)
+                if not Product.objects.filter(pk=product_id).exists():
+                    raise ValidationError(create_error('Not found', 'product'))
+                else:
+                    product = Product.objects.get(pk=product_id)
+                    end_price += product.price
+                quantity = data.get("quantity", 1)
+                values = data.get('values', None)
+                if quantity > product.amount:
+                    raise ValidationError(create_error('amount', 'you exceded the avaliable amount'))
+                if not values:
+                    raise ValidationError(create_error('Validation error', 'please enter attributes'))
+            if end_price > user.wallet.amount:
+                raise ValidationError(create_error('Wallet', 'You dont have enought funds'))
+
+        return attrs
 
     def get_username(self, instance):
         return instance.user.email
 
     def get_company(self, instance):
         return instance.shipping_company.name
-
-    def get_location(self, instance):
-        return instance.address.address
 
     def get_total_cost(self, instance):
         raw_cost = sum([elment.price for elment in instance.product_orders.all()])
@@ -721,20 +747,31 @@ class OrderSerializer(serializers.ModelSerializer):
         return final_cost
 
     def create(self, validated_data):
-        product_orders = validated_data.pop('product_orders', None)
-        validated_data.update({"user": self.context['request'].user})
+        product_orders = self.context['request'].data.pop('product_orders')
+        user = self.context['request'].user
+        validated_data.update({"user": user})
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
-            quantity = product_order.get('quantity')
-            validate_product_order(product_order)
-            new_pd = ProductOrder.objects.create(**product_order)
+            product_id = product_order.pop('product', None)
+            values = product_order.pop('values')
+            value_objs = AttributDetails.objects.filter(pk__in=values)
+            product = Product.objects.get(pk=product_id)
+            quantity = product_order.get('quantity', 1)
+            new_pd = ProductOrder.objects.create(product=product, **product_order)
             new_pd.order = instance
-            if new_pd.product.product_type in ['bazaar', 'shops']:
-                new_pd.product.amount = new_pd.product.amount - quantity
-                new_pd.product.save()
-            instance.product_orders.add(new_pd)
+            for value in value_objs:
+                new_pd.attrs.add(value)
+                new_pd.save()
 
-        OrderLog.objects.create(order=instance, auctions=False)
+            new_pd.product.amount = new_pd.product.amount - quantity
+            new_pd.product.save()
+            new_pd.sub_price = product.price * quantity
+            new_pd.save()
+            instance.product_orders.add(new_pd)
+            user.wallet.amount -= product.price
+            user.save()
+        OrderLog.objects.create(order=instance)
+        instance.status = Order.PENDING
         instance.save()
         return instance
 
