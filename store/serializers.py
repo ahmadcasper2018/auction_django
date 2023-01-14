@@ -315,7 +315,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     childs = SubCategorySerializer(many=True, read_only=True)
     brands = BrandSerializer(read_only=True, many=True)
-    category_attrs = CategoryAttributSerializer(many=True, required=False)
+    category_attrs = CategoryAttributSerializer(many=True, read_only=True)
     products = CategoryProductSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
     banner = Base64ImageField(required=False)
@@ -330,6 +330,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         code = attrs.get('code', None)
+        atttrs = self.context['request'].data.get('category_attrs', None)
+
+        if atttrs:
+            for attr in atttrs:
+                get_object_or_404(Attribut, pk=attr['attribut'])
+
         if code:
             if code not in [Category.AUCTION, Category.SHOP, Category.BAZAR]:
                 raise ValidationError("invalid code")
@@ -346,33 +352,31 @@ class CategorySerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        categoty_attrs = validated_data.pop('category_attrs', None)
         attrs = self.context['request'].data.get('category_attrs')
         instance = super(CategorySerializer, self).create(validated_data)
         if attrs:
             for attr in attrs:
-                attr = get_object_or_404(Attribut, pk=attr['id'])
+                attr = get_object_or_404(Attribut, pk=attr['attribut'])
                 obj, created = CategoryAttribute.objects.get_or_create(attribut=attr)
                 obj.category = instance
                 obj.save()
                 instance.category_attrs.add(obj)
-        instance.save()
+            instance.save()
         return instance
 
     def update(self, instance, validated_data):
-        categoty_attrs = validated_data.pop('category_attrs', None)
         attrs = self.context['request'].data.get('category_attrs')
 
         instance = super(CategorySerializer, self).update(instance, validated_data)
         if attrs:
             instance.category_attrs.clear()
             for attr in attrs:
-                attr = get_object_or_404(Attribut, pk=attr['id'])
+                attr = get_object_or_404(Attribut, pk=attr['attribut'])
                 obj, created = CategoryAttribute.objects.get_or_create(attribut=attr)
                 obj.category = instance
                 obj.save()
                 instance.category_attrs.add(obj)
-        instance.save()
+            instance.save()
         return instance
 
     class Meta:
