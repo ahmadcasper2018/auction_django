@@ -38,6 +38,18 @@ def handle_404(message, field):
     }
 
 
+
+def create_error(field, error):
+    response = {'message': f"Invalid {field}"}
+    response.update(
+        {
+            'errors': {
+                field: error
+            }
+        }
+    )
+    return response
+
 # from authentication.serializers import UserProductSerializer
 class AttributeValueSerializer(serializers.ModelSerializer):
     value = serializers.SerializerMethodField()
@@ -418,6 +430,46 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_type(self, instance):
         return instance.product_type
 
+    def validate(self, attrs):
+        data = self.context['request'].data
+        title_en = data.get('title_en')
+        if len(Product.objects.filter(title=title_en)) > 1:
+            raise ValidationError(create_error('already exists', 'product'))
+        category = data.get('category', None)
+        media_files = data.get('media_files', None)
+        attrs_in = data.get('attrs', None)
+        if not category:
+            raise ValidationError(create_error('Category', 'you have to enter a valid category'))
+        else:
+            if not Category.objects.filter(pk=category).exists():
+                raise ValidationError(create_error('Not found', 'Category'))
+        if not media_files:
+            raise ValidationError(create_error('Not valid', 'you have to enter valid media files'))
+        else:
+            media_objs = Media.objects.filter(pk__in=media_files)
+            if len(media_files) != len(media_objs):
+                raise ValidationError(create_error('not found', 'please enter a valid media files'))
+        if not attrs_in:
+            raise ValidationError(create_error('Not valid', 'you have to enter valid media files'))
+        else:
+            for attr in attrs_in:
+                attribut_id = attr['attribute']
+                values = attr['values']
+                if not attribut_id:
+                    raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
+                else:
+                    if not Attribut.objects.filter(pk=attribut_id).exists():
+                        raise ValidationError(create_error('Not found', 'you have to enter valid attribute'))
+                if not values:
+                    raise ValidationError(create_error('Not valid', 'you have to enter valid values for the attribute'))
+                else:
+                    values_obj = AttributDetails.objects.filter(pk__in=values)
+                    if len(values_obj) != len(values):
+                        raise ValidationError(
+                            create_error('Not found', 'you have to enter valid values for the attribute'))
+
+        return attrs
+
     def get_title(self, instance):
         return {
             "en": instance.title_en,
@@ -430,30 +482,23 @@ class ProductSerializer(serializers.ModelSerializer):
             "ar": instance.description_ar
         }
 
-    @transaction.atomic
+    def get_avg_reviews(self, instance):
+        return instance.avg_reviews
+
     def create(self, validated_data):
-        category = validated_data.pop('category', None)
+        data = self.context['request'].data
+        category = data.get('category')
         brand = validated_data.pop('brand', None)
-        if not category:
-            raise ValidationError('you have to enter a category')
         attrs = self.context['request'].data.get('attrs', None)
-        media_files = self.context['request'].data.get('media_files')
+        media_files = data.get('media_files')
         address = validated_data.pop('address', None)
-        validated_data.update(
-            {
-                "user": self.context['request'].user
-            }
-        )
-
-        category_obj = Category.objects.filter(pk=category['id']).first()
-        if not category_obj:
-            raise ValidationError(handle_404('invalid input', 'Category'))
-
+        validated_data.update({"user": self.context['request'].user})
         instance = super(ProductSerializer, self).create(validated_data)
+        category = Category.objects.get(pk=category)
         if brand:
             brand = get_object_or_404(Brand, pk=brand['id'])
             instance.brand = brand
-        instance.category = category_obj
+        instance.category = category
         if attrs:
             for attr in attrs:
                 attribut_id = attr.get('attribute')
@@ -465,37 +510,33 @@ class ProductSerializer(serializers.ModelSerializer):
                     attribut=attribute,
                     product=instance
                 )
-                values_obs = AttributValue.objects.filter(pk__in=values)
+                values_obs = AttributDetails.objects.filter(pk__in=values)
                 if not values_obs:
                     raise ValidationError(handle_404('invalid input', 'values'))
                 for value in values_obs:
                     new_product_attribute.values.add(value)
                 new_product_attribute.save()
 
-        if media_files:
-            for file_id in media_files:
-                media_obj = Media.objects.filter(pk=int(file_id)).first()
-                if not media_obj:
-                    raise ValidationError(handle_404('invalid input', 'media'))
-                instance.media.add(media_obj)
+        for file_id in media_files:
+            media_obj = Media.objects.get(pk=int(file_id))
+            instance.media.add(media_obj)
+            instance.save()
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
                 obj = Address.objects.create(**address)
                 instance.address = obj
+                instance.save()
         instance.address = obj
-        ProductViewers.objects.create(
-            product=instance
-        )
         instance.save()
         return instance
 
-    @transaction.atomic
     def update(self, instance, validated_data):
-        category = validated_data.pop('category', None)
-        attrs = validated_data.pop('attrs', None)
-        brand = validated_data.pop('brand', None)
-        media_files = self.context['request'].data.get('media_files')
+        data = self.context['request'].data
+        category = Category.objects.get(pk=data.get('category'))
+        attrs = data.get('attrs', None)
+        brand = data.pop('brand', None)
+        media_files = data.get('media_files')
         address = validated_data.pop('address', None)
         validated_data.update(
             {
@@ -503,33 +544,42 @@ class ProductSerializer(serializers.ModelSerializer):
             }
         )
         instance = super(ProductSerializer, self).update(instance, validated_data)
-        if category:
-            category_obj = Category.objects.filter(pk=category['id']).first()
-            if not category_obj:
-                raise ValidationError(handle_404('invalid input', 'Category'))
-            instance.category = category_obj
-
+        instance.category = category
         if brand:
             brand = get_object_or_404(Brand, pk=brand['id'])
             instance.brand = brand
         if attrs:
             instance.attrs.clear()
             for attr in attrs:
-                obj, created = ProductAttribut.objects.get_or_create(product=instance, **attr)
-                obj.product = instance
-                obj.save()
-                instance.attrs.add(obj)
+                attribut_id = attr.get('attribute')
+                attribute = Attribut.objects.filter(pk=attribut_id).first()
+                if not attribute:
+                    raise ValidationError(handle_404('invalid input', 'attribute'))
+                values = attr.get('values')
+                new_product_attribute = ProductAttribut.objects.create(
+                    attribut=attribute,
+                    product=instance
+                )
+                values_obs = AttributDetails.objects.filter(pk__in=values)
+                if not values_obs:
+                    raise ValidationError(handle_404('invalid input', 'values'))
+                for value in values_obs:
+                    new_product_attribute.values.add(value)
+                new_product_attribute.save()
         if media_files:
             instance.media.clear()
             for file_id in media_files:
-                media_obj = get_object_or_404(Media, pk=int(file_id))
+                media_obj = Media.objects.get(pk=int(file_id))
                 instance.media.add(media_obj)
+                instance.save()
+
         obj = instance.address
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
                 obj = Address.objects.create(**address)
                 instance.address = obj
+
         instance.address = obj
         instance.save()
         return instance
