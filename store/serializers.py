@@ -753,7 +753,7 @@ class OrderSerializer(serializers.ModelSerializer):
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
             product_id = product_order.pop('product', None)
-            values = product_order.pop('values')
+            values = product_order.get('values')
             value_objs = AttributDetails.objects.filter(pk__in=values)
             product = Product.objects.get(pk=product_id)
             quantity = product_order.get('quantity', 1)
@@ -793,16 +793,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ShippingCompanySerializer(serializers.ModelSerializer):
-    orders = OrderSerializer(many=True, read_only=True)
-    name_current = serializers.CharField(read_only=True, source='title')
-    address = AddressCompanySerializer()
+    name_current = serializers.CharField(read_only=True, source='name')
     name = serializers.SerializerMethodField(required=False)
+    name_en = serializers.CharField(write_only=True)
+    name_ar = serializers.CharField(write_only=True)
 
     def get_name(self, instance):
         return {
             "en": instance.name_en,
             "ar": instance.name_ar
         }
+
 
     def create(self, validated_data):
         address = validated_data.pop('address')
