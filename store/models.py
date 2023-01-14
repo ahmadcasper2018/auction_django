@@ -301,7 +301,12 @@ class Media(models.Model):
         related_name='medias',
     )
     alt = models.CharField(max_length=32, null=True)
-    value = models.CharField(max_length=64, null=True)
+    value = models.ForeignKey(
+        AttributDetails,
+        on_delete=models.SET_NULL,
+        related_name='media',
+        null=True
+    )
     is_logo = models.BooleanField(default=False)
 
     @property
@@ -519,4 +524,3 @@ class AuctionLog(TimeStampedModel):
     )
 
     direct = models.BooleanField(default=False)
-

@@ -396,6 +396,42 @@ class MediaViewSet(viewsets.ModelViewSet):
         media_obj.save()
         return Response(data={"ids": response}, status=200)
 
+    @action(detail=False, methods=['post'])
+    def upload_product_media(self, request):
+        alt = request.data.get('alt')
+        value = request.data.get('value')
+        attribute = request.data.get('attribute')
+        if not alt:
+            raise ValidationError(create_error('Alt', "enter a valid Alt"))
+        if not value:
+            raise ValidationError(create_error('value', "enter a value"))
+        else:
+            if not AttributDetails.objects.filter(pk=value).exists():
+                raise ValidationError(create_error('value', "enter a value"))
+        if not attribute:
+            raise ValidationError(create_error('value', "enter a value"))
+        else:
+            if not Attribut.objects.filter(pk=value).exists():
+                raise ValidationError(create_error('value', "enter a value"))
+        product_id = self.request.query_params.get('product_id', None)
+        if not product_id:
+            raise ValidationError(create_error('Product', "enter a valid product"))
+        file = dict(request.FILES).get('file', None)
+        if not file:
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={'Error': 'you have to enter a valid media'})
+        file = file[0]
+        product = Product.objects.get(pk=product_id)
+        attribute = Attribut.objects.get(pk=attribute)
+        value =  AttributDetails.objects.get(pk=value)
+        new_medias = []
+        new_media = Media.objects.create(file=file, alt=alt, value=value)
+        new_media.attributes.add(attribute)
+        product.media.add(new_media)
+        new_medias.append(new_media)
+
+        return Response(status=status.HTTP_201_CREATED, data=MediaSerializer(new_medias, many=True).data)
+
 
 class SliderMediaViewSet(viewsets.ModelViewSet):
     queryset = SliderMedia.objects.all()
