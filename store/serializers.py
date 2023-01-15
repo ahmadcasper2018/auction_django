@@ -410,9 +410,9 @@ class ProductBrandSerializer(serializers.Serializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     # user = UserProductSerializer()
-    category = ProductCategorySerializer()
+    category = ProductCategorySerializer(read_only=True)
     attrs = ProductAttributSubSerializer(many=True, required=False, read_only=True)
-    brand = ProductBrandSerializer(required=False)
+    brand = ProductBrandSerializer(read_only=True)
     product_orders = ProductOrderSerializer(many=True, read_only=True)
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
@@ -444,38 +444,25 @@ class ProductSerializer(serializers.ModelSerializer):
         if len(Product.objects.filter(title=title_en)) > 1:
             raise ValidationError(create_error('already exists', 'product'))
         category = data.get('category', None)
-        media_files = data.get('media_files', None)
+        brand = data.get('brand', None)
         attrs_in = data.get('attrs', None)
         if not category:
             raise ValidationError(create_error('Category', 'you have to enter a valid category'))
         else:
             if not Category.objects.filter(pk=category).exists():
                 raise ValidationError(create_error('Not found', 'Category'))
-        if not media_files:
-            raise ValidationError(create_error('Not valid', 'you have to enter valid media files'))
-        else:
-            media_objs = Media.objects.filter(pk__in=media_files)
-            if len(media_files) != len(media_objs):
-                raise ValidationError(create_error('not found', 'please enter a valid media files'))
-        if not attrs_in:
-            raise ValidationError(create_error('Not valid', 'you have to enter valid media files'))
-        else:
-            for attr in attrs_in:
-                attribut_id = attr['attribute']
-                values = attr['values']
-                if not attribut_id:
-                    raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
-                else:
-                    if not Attribut.objects.filter(pk=attribut_id).exists():
-                        raise ValidationError(create_error('Not found', 'you have to enter valid attribute'))
-                if not values:
-                    raise ValidationError(create_error('Not valid', 'you have to enter valid values for the attribute'))
-                else:
-                    values_obj = AttributDetails.objects.filter(pk__in=values)
-                    if len(values_obj) != len(values):
-                        raise ValidationError(
-                            create_error('Not found', 'you have to enter valid values for the attribute'))
 
+        if not brand:
+            raise ValidationError(create_error('Category', 'you have to enter a valid category'))
+        else:
+            if not Brand.objects.filter(pk=brand).exists():
+                raise ValidationError(create_error('Not found', 'Brand'))
+
+        if not attrs_in:
+            raise ValidationError(create_error('Not Found', 'you have to enter valid attribute '))
+        else:
+            if not len(AttributDetails.objects.filter(pk__in=attrs_in)) == len(attrs_in):
+                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
         return attrs
 
     def get_title(self, instance):
@@ -496,35 +483,22 @@ class ProductSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         data = self.context['request'].data
         category = data.get('category')
-        brand = validated_data.pop('brand', None)
+        brand = data.pop('brand', None)
         attrs = self.context['request'].data.get('attrs', None)
-
         address = validated_data.pop('address', None)
         validated_data.update({"user": self.context['request'].user})
         instance = super(ProductSerializer, self).create(validated_data)
         category = Category.objects.get(pk=category)
-        if brand:
-            brand = get_object_or_404(Brand, pk=brand['id'])
-            instance.brand = brand
+        instance.brand = Brand.objects.get(pk=brand)
         instance.category = category
-        if attrs:
-            for attr in attrs:
-                attribut_id = attr.get('attribute')
-                attribute = Attribut.objects.filter(pk=attribut_id).first()
-                if not attribute:
-                    raise ValidationError(handle_404('invalid input', 'attribute'))
-                values = attr.get('values')
-                new_product_attribute = ProductAttribut.objects.create(
-                    attribut=attribute,
-                    product=instance
-                )
-                values_obs = AttributDetails.objects.filter(pk__in=values)
-                if not values_obs:
-                    raise ValidationError(handle_404('invalid input', 'values'))
-                for value in values_obs:
-                    new_product_attribute.values.add(value)
-                new_product_attribute.save()
-
+        values_obs = AttributDetails.objects.filter(pk__in=attrs)
+        attribute = values_obs[0].attribut
+        new_product_attribute = ProductAttribut.objects.create(
+            attribut=attribute,
+            product=instance
+        )
+        new_product_attribute.values.add(*values_obs)
+        new_product_attribute.save()
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
