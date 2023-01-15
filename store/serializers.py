@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from authentication.models import User
 from authentication.serializers import SubUserSerializer
-from location.models import Address
+from location.models import Address, City
 from .models import (
     Product,
     Category,
@@ -809,22 +809,32 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        address = validated_data.pop('address')
-        location, created = Address.objects.get_or_create(**address)
+        address = self.context['request'].data.pop('address')
+        city = City.objects.get(pk=address['city'])
+        address = address['address']
+        location, created = Address.objects.get_or_create(city=city, address=address)
         validated_data.update({"address": location})
         instance = super(ShippingCompanySerializer, self).create(validated_data)
         instance.save()
         return instance
 
     def update(self, instance, validated_data):
-        address = validated_data.pop('address')
-        instance.name_en = validated_data.get('name_en', instance.name_en)
-        instance.name_ar = validated_data.get('name_ar', instance.name_ar)
-        instance.cost = validated_data.get('cost', instance.cost)
-        instance.phone = validated_data.get('phone', instance.phone)
-        location, created = Address.objects.get_or_create(**address)
-        instance.address = location
+        address_data = validated_data.pop('address', {})
+        name_en = validated_data.pop('name_en', None)
+        name_ar = validated_data.pop('name_ar', None)
+        cost = validated_data.pop('cost', None)
+        phone = validated_data.pop('phone', None)
+
+        # Update fields with new data
+        instance.name_en = name_en or instance.name_en
+        instance.name_ar = name_ar or instance.name_ar
+        instance.cost = cost or instance.cost
+        instance.phone = phone or instance.phone
+
+        address, created = Address.objects.get_or_create(**address_data)
+        instance.address = address
         instance.save()
+
         return instance
 
     class Meta:
