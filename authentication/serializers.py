@@ -104,15 +104,10 @@ class WalletSerializer(serializers.ModelSerializer):
     logs = WalletLogSerializer(read_only=True, many=True)
 
     def update(self, instance, validated_data):
-        old_amount = instance.amount
         new_amount = validated_data.get('amount')
-        instance = super(WalletSerializer, self).update(instance, validated_data)
-        if new_amount >= old_amount:
-            withdraw = new_amount - old_amount
-            WalletLog.objects.create(wallet=instance, withdraw=str(withdraw))
-        else:
-            deposit = old_amount - new_amount
-            WalletLog.objects.create(wallet=instance, deposite=str(deposit))
+        instance.amount +=  new_amount
+        instance.save()
+        WalletLog.objects.create(wallet=instance)
         return instance
 
     class Meta:
@@ -237,7 +232,6 @@ class UserExtendedSerializer(UserSerializer):
         if attrs.get('user_role') and not self.context['request'].user.is_superuser:
             raise ValidationError({"User type": "You dont have permession to create this type of users !"})
         return attrs
-
 
     def update(self, instance, validated_data):
         user = self.context['request'].user
