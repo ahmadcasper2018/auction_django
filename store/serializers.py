@@ -418,9 +418,10 @@ class ProductSerializer(serializers.ModelSerializer):
     attrs = ProductAttributSubSerializer(many=True, required=False, read_only=True)
     brand = ProductBrandSerializer(read_only=True)
     product_orders = ProductOrderSerializer(many=True, read_only=True)
+
     media = MediaSerializer(many=True, read_only=True)
     image = Base64ImageField(required=False)
-    address = AddressCompanySerializer()
+    address = AddressCompanySerializer(read_only=True)
     title = serializers.SerializerMethodField(required=False)
     title_current = serializers.CharField(read_only=True, source='title')
     description_current = serializers.CharField(read_only=True, source='description')
@@ -431,6 +432,7 @@ class ProductSerializer(serializers.ModelSerializer):
     description_en = serializers.CharField(write_only=True)
     reviews = SubUserSerializer(many=True, read_only=True)
     discount = serializers.DecimalField(max_digits=10, decimal_places=3, required=False)
+    current_price = serializers.DecimalField(max_digits=10, decimal_places=3, read_only=True)
     tags = serializers.SerializerMethodField()
 
     def get_tags(self, instance):
@@ -448,19 +450,13 @@ class ProductSerializer(serializers.ModelSerializer):
         if len(Product.objects.filter(title=title_en)) > 1:
             raise ValidationError(create_error('already exists', 'product'))
         category = data.get('category', None)
-        brand = data.get('brand', None)
+
         attrs_in = data.get('attrs', None)
         if not category:
             raise ValidationError(create_error('Category', 'you have to enter a valid category'))
         else:
             if not Category.objects.filter(pk=category).exists():
                 raise ValidationError(create_error('Not found', 'Category'))
-
-        if not brand:
-            raise ValidationError(create_error('Category', 'you have to enter a valid category'))
-        else:
-            if not Brand.objects.filter(pk=brand).exists():
-                raise ValidationError(create_error('Not found', 'Brand'))
 
         if not attrs_in:
             raise ValidationError(create_error('Not Found', 'you have to enter valid attribute '))
@@ -492,8 +488,14 @@ class ProductSerializer(serializers.ModelSerializer):
         address = validated_data.pop('address', None)
         validated_data.update({"user": self.context['request'].user})
         instance = super(ProductSerializer, self).create(validated_data)
+        instance.current_price = validated_data.get('min_price')
         category = Category.objects.get(pk=category)
-        instance.brand = Brand.objects.get(pk=brand)
+        if brand:
+            if not Brand.objects.filter(pk=brand).exists():
+                raise ValidationError(create_error('Brand', 'you have to enter a valid brand'))
+            else:
+                instance.brand = Brand.objects.get(pk=brand)
+
         instance.category = category
         values_obs = AttributDetails.objects.filter(pk__in=attrs)
         for value in values_obs:
@@ -511,7 +513,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 obj = Address.objects.create(**address)
                 instance.address = obj
                 instance.save()
-        instance.address = obj
+            instance.address = obj
         instance.save()
         return instance
 
@@ -524,7 +526,12 @@ class ProductSerializer(serializers.ModelSerializer):
         validated_data.update({"user": self.context['request'].user})
         instance = super(ProductSerializer, self).create(validated_data)
         category = Category.objects.get(pk=category)
-        instance.brand = Brand.objects.get(pk=brand)
+        if brand:
+            if not Brand.objects.filter(pk=brand).exists():
+                raise ValidationError(create_error('Brand', 'you have to enter a valid brand'))
+            else:
+                instance.brand = Brand.objects.get(pk=brand)
+        instance.current_price = validated_data.get('min_price')
         instance.category = category
         values_obs = AttributDetails.objects.filter(pk__in=attrs)
         attrs = instance.attrs.all()
@@ -546,7 +553,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 obj = Address.objects.create(**address)
                 instance.address = obj
                 instance.save()
-        instance.address = obj
+            instance.address = obj
         instance.save()
         return instance
 
