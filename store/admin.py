@@ -9,7 +9,7 @@ from .models import (
     Media,
     Order,
     ProductOrder,
-    Brand, SliderMedia, Slider, AuctionOrder, AttributValue, Page
+    Brand, SliderMedia, Slider, AuctionOrder, AttributValue, Page, CategoryAttribute
 
 )
 
@@ -30,3 +30,5 @@ admin.site.register(AuctionOrder)
 admin.site.register(Slider)
 admin.site.register(AttributValue)
 admin.site.register(Page)
+admin.site.register(CategoryAttribute)
+
