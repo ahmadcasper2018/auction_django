@@ -101,7 +101,6 @@ class BrandSerializer(serializers.ModelSerializer):
 
 
 class AddressCompanySerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
     address = serializers.SerializerMethodField()
     city_current = serializers.SerializerMethodField()
 
