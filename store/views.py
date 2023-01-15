@@ -358,7 +358,7 @@ class AttributViewSet(viewsets.ModelViewSet):
     serializer_class = AttributSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, many=True, context={'request': request})
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
