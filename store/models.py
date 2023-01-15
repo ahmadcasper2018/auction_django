@@ -245,7 +245,7 @@ class Product(models.Model):
 
 class ProductAttribut(models.Model):
     values = models.ManyToManyField(
-        AttributValue,
+        AttributDetails,
         related_name='product_attrs'
     )
     product = models.ForeignKey(
