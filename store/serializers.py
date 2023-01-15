@@ -527,11 +527,19 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.brand = Brand.objects.get(pk=brand)
         instance.category = category
         values_obs = AttributDetails.objects.filter(pk__in=attrs)
-        attribute = values_obs[0].attribut
-        instance.attribut = attribute
-        instance.values.all().delete()
-        instance.values.add(*values_obs)
-        instance.save()
+        attrs = instance.attrs.all()
+        for atr in attrs:
+            atr.values.all().delete()
+
+        for value in values_obs:
+            attribute = value.attribut
+            new_pd, created = ProductAttribut.objects.get_or_create(
+                product=instance,
+                attribut=attribute,
+            )
+            new_pd.values.add(*values_obs)
+            new_pd.save()
+
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
