@@ -837,6 +837,8 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
         city = City.objects.get(pk=address_data['city'])
         addres = address_data['address']
         address = Address.objects.filter(city=city, address=addres).first()
+        if not address:
+            address = Address.objects.create(city=city, address=addres)
         instance.address = address
         instance.save()
 
