@@ -245,19 +245,22 @@ class Product(models.Model):
 
 class ProductAttribut(models.Model):
     values = models.ManyToManyField(
-        AttributValue,
+        AttributDetails,
         related_name='product_attrs'
     )
     product = models.ForeignKey(
         Product,
         related_name='attrs',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+
     )
 
     attribut = models.ForeignKey(
         Attribut,
         related_name='product_attrs',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True
     )
 
     @property
