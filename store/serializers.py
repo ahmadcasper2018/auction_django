@@ -231,7 +231,7 @@ class AttributDetailsSerializer(serializers.ModelSerializer):
 
 class CategoryAttributSerializer(serializers.ModelSerializer):
     title_current = serializers.SerializerMethodField(read_only=True)
-    values = AttributDetailsSerializer(read_only=True)
+    values = serializers.SerializerMethodField(read_only=True)
 
     def get_title_current(self, instance):
         if instance.attribut:
@@ -244,7 +244,7 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
         if not objs:
             return []
         else:
-            return AttributDetailsSerializer(objs, many=True)
+            return AttributDetailsSerializer(objs, many=True).data
 
     class Meta:
         model = CategoryAttribute
