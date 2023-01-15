@@ -102,8 +102,8 @@ class ActionViewMixin(object):
     def post(self, request, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            data = {'message': 'You have entered wrong email or password',
-                    'errors': {'email or password': serializer.errors.get('non_field_errors')}}
+            data = {'message': 'You have entered wrong email_or_password',
+                    'errors': {'email_or_password': serializer.errors.get('non_field_errors')}}
 
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         return self._action(serializer)
