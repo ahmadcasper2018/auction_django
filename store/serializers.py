@@ -729,8 +729,6 @@ class OrderSerializer(serializers.ModelSerializer):
                 values = data.get('values', None)
                 if quantity > product.amount:
                     raise ValidationError(create_error('amount', 'you exceded the avaliable amount'))
-                if not values:
-                    raise ValidationError(create_error('Validation error', 'please enter attributes'))
             if end_price > user.wallet.amount:
                 raise ValidationError(create_error('Wallet', 'You dont have enought funds'))
 
@@ -756,15 +754,15 @@ class OrderSerializer(serializers.ModelSerializer):
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
             product_id = product_order.pop('product', None)
-            values = product_order.pop('values')
-            value_objs = AttributDetails.objects.filter(pk__in=values)
+            values = product_order.pop('values',None)
             product = Product.objects.get(pk=product_id)
             quantity = product_order.get('quantity', 1)
             new_pd = ProductOrder.objects.create(product=product, **product_order)
             new_pd.order = instance
-            for value in value_objs:
-                new_pd.attrs.add(value)
-
+            if values:
+                value_objs = AttributDetails.objects.filter(pk__in=values)
+                for value in value_objs:
+                    new_pd.attrs.add(value)
             new_pd.product.amount = new_pd.product.amount - quantity
             new_pd.product.save()
             new_pd.sub_price = product.price * quantity
