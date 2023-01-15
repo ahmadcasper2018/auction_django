@@ -724,7 +724,7 @@ class OrderSerializer(serializers.ModelSerializer):
                     raise ValidationError(create_error('Not found', 'product'))
                 else:
                     product = Product.objects.get(pk=product_id)
-                    end_price += product.price
+                    end_price += (product.price * product.discount) / 100
                 quantity = data.get("quantity", 1)
                 values = data.get('values', None)
                 if quantity > product.amount:
@@ -754,7 +754,7 @@ class OrderSerializer(serializers.ModelSerializer):
         instance = super(OrderSerializer, self).create(validated_data)
         for product_order in product_orders:
             product_id = product_order.pop('product', None)
-            values = product_order.pop('values',None)
+            values = product_order.pop('values', None)
             product = Product.objects.get(pk=product_id)
             quantity = product_order.get('quantity', 1)
             new_pd = ProductOrder.objects.create(product=product, **product_order)
@@ -765,10 +765,10 @@ class OrderSerializer(serializers.ModelSerializer):
                     new_pd.attrs.add(value)
             new_pd.product.amount = new_pd.product.amount - quantity
             new_pd.product.save()
-            new_pd.sub_price = product.price * quantity
+            new_pd.sub_price = ((product.price * product.discount) / 100) * quantity
             new_pd.save()
             instance.product_orders.add(new_pd)
-            user.wallet.amount -= product.price
+            user.wallet.amount -= (product.price * product.discount) / 100
             user.wallet.save()
             user.save()
         OrderLog.objects.create(order=instance)
