@@ -821,7 +821,7 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        address_data = validated_data.pop('address', {})
+        address_data = self.context['request'].data.pop('address', {})
         name_en = validated_data.pop('name_en', None)
         name_ar = validated_data.pop('name_ar', None)
         cost = validated_data.pop('cost', None)
@@ -832,8 +832,11 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
         instance.name_ar = name_ar or instance.name_ar
         instance.cost = cost or instance.cost
         instance.phone = phone or instance.phone
-
-        address, created = Address.objects.get_or_create(**address_data)
+        if not City.objects.filter(pk=address_data['city']).exists():
+            raise ValidationError(create_error('city', 'please enter a valid city'))
+        city = City.objects.get(pk=address_data['city'])
+        addres = address_data['address']
+        address = Address.objects.filter(city=city, address=addres).first()
         instance.address = address
         instance.save()
 
