@@ -451,18 +451,12 @@ class ProductSerializer(serializers.ModelSerializer):
             raise ValidationError(create_error('already exists', 'product'))
         category = data.get('category', None)
 
-        attrs_in = data.get('attrs', None)
         if not category:
             raise ValidationError(create_error('Category', 'you have to enter a valid category'))
         else:
             if not Category.objects.filter(pk=category).exists():
                 raise ValidationError(create_error('Not found', 'Category'))
 
-        if not attrs_in:
-            raise ValidationError(create_error('Not Found', 'you have to enter valid attribute '))
-        else:
-            if not len(AttributDetails.objects.filter(pk__in=attrs_in)) == len(attrs_in):
-                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
         return attrs
 
     def get_title(self, instance):
@@ -497,16 +491,19 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.brand = Brand.objects.get(pk=brand)
 
         instance.category = category
-        values_obs = AttributDetails.objects.filter(pk__in=attrs)
-        for value in values_obs:
-            attribute = value.attribut
-            new_pd, created = ProductAttribut.objects.get_or_create(
-                product=instance,
-                attribut=attribute,
-            )
-            new_pd.values.add(*values_obs)
-            new_pd.save()
-
+        if attrs:
+            if not len(AttributDetails.objects.filter(pk__in=attrs)) == len(attrs):
+                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
+            else:
+                values_obs = AttributDetails.objects.filter(pk__in=attrs)
+                for value in values_obs:
+                    attribute = value.attribut
+                    new_pd, created = ProductAttribut.objects.get_or_create(
+                        product=instance,
+                        attribut=attribute,
+                    )
+                    new_pd.values.add(*values_obs)
+                    new_pd.save()
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
@@ -533,19 +530,23 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.brand = Brand.objects.get(pk=brand)
         instance.current_price = validated_data.get('min_price')
         instance.category = category
-        values_obs = AttributDetails.objects.filter(pk__in=attrs)
-        attrs = instance.attrs.all()
-        for atr in attrs:
-            atr.values.all().delete()
+        if attrs:
+            if not len(AttributDetails.objects.filter(pk__in=attrs)) == len(attrs):
+                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
+            else:
+                values_obs = AttributDetails.objects.filter(pk__in=attrs)
+                attrs = instance.attrs.all()
+                for atr in attrs:
+                    atr.values.all().delete()
 
-        for value in values_obs:
-            attribute = value.attribut
-            new_pd, created = ProductAttribut.objects.get_or_create(
-                product=instance,
-                attribut=attribute,
-            )
-            new_pd.values.add(*values_obs)
-            new_pd.save()
+                for value in values_obs:
+                    attribute = value.attribut
+                    new_pd, created = ProductAttribut.objects.get_or_create(
+                        product=instance,
+                        attribut=attribute,
+                    )
+                    new_pd.values.add(*values_obs)
+                    new_pd.save()
 
         if address:
             obj = Address.objects.filter(**address).first()
