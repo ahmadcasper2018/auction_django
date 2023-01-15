@@ -104,10 +104,12 @@ class WalletSerializer(serializers.ModelSerializer):
     logs = WalletLogSerializer(read_only=True, many=True)
 
     def update(self, instance, validated_data):
+        old_amount = instance.amount
         new_amount = validated_data.get('amount')
+        withdraw = new_amount - old_amount
         instance.amount +=  new_amount
         instance.save()
-        WalletLog.objects.create(wallet=instance)
+        WalletLog.objects.create(wallet=instance,withdraw=str(withdraw))
         return instance
 
     class Meta:
