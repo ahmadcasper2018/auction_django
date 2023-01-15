@@ -18,21 +18,12 @@ from .models import (
 
 # Create your views here.
 
-class CityView(mixins.RetrieveModelMixin,
-               mixins.ListModelMixin,
-               mixins.CreateModelMixin,
-               mixins.UpdateModelMixin,
-               viewsets.GenericViewSet):
+class CityView(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
 
 
-class AddressView(mixins.RetrieveModelMixin,
-                  mixins.CreateModelMixin,
-                  mixins.ListModelMixin,
-                  mixins.UpdateModelMixin,
-                  viewsets.GenericViewSet,
-                  ):
+class AddressView(viewsets.ModelViewSet):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
 
@@ -43,10 +34,6 @@ class AddressView(mixins.RetrieveModelMixin,
         return qs
 
 
-class GovernorateView(mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.UpdateModelMixin,
-                      viewsets.GenericViewSet):
+class GovernorateView(viewsets.ModelViewSet):
     queryset = Governorate.objects.all()
     serializer_class = GovernorateSerializer

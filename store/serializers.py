@@ -102,14 +102,18 @@ class BrandSerializer(serializers.ModelSerializer):
 
 class AddressCompanySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
+    address = serializers.SerializerMethodField()
     city_current = serializers.SerializerMethodField()
 
     def get_city_current(self, instance):
         return instance.city.title
 
+    def get_address(self, instance):
+        return instance.address
+
     class Meta:
         model = Address
-        fields = ('id', 'city', 'address', 'city_current')
+        fields = ('city', 'address', 'city_current')
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
@@ -522,7 +526,6 @@ class ProductSerializer(serializers.ModelSerializer):
                     new_product_attribute.values.add(value)
                 new_product_attribute.save()
 
-
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
@@ -794,6 +797,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ShippingCompanySerializer(serializers.ModelSerializer):
+    address = AddressCompanySerializer(read_only=True)
     name_current = serializers.CharField(read_only=True, source='name')
     name = serializers.SerializerMethodField(required=False)
     name_en = serializers.CharField(write_only=True)

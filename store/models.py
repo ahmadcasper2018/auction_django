@@ -199,8 +199,8 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=1)
     sale = models.BooleanField(default=False)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    auction = models.BooleanField(default=False)
     auction_success = models.BooleanField(default=False)
+    auction_viewrs = models.PositiveIntegerField(null=True, blank=True)
 
     @property
     def product_type(self):
