@@ -810,6 +810,8 @@ class ShippingCompanySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         address = self.context['request'].data.pop('address')
+        if not City.objects.filter(pk=address['city']).exists():
+            raise ValidationError(create_error('city', 'please enter a valid city'))
         city = City.objects.get(pk=address['city'])
         address = address['address']
         location, created = Address.objects.get_or_create(city=city, address=address)
