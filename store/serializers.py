@@ -239,6 +239,13 @@ class CategoryAttributSerializer(serializers.ModelSerializer):
         else:
             return ''
 
+    def get_values(self, instance):
+        objs = instance.attribut.values.all()
+        if not objs:
+            return []
+        else:
+            return AttributDetailsSerializer(objs, many=True)
+
     class Meta:
         model = CategoryAttribute
         fields = ('id', 'attribut', 'title_current', 'values')
@@ -495,10 +502,11 @@ class ProductSerializer(serializers.ModelSerializer):
         for value in values_obs:
             attribute = value.attribut
 
+            new_product_attribute = ProductAttribut.objects.create(
+                product=instance
+            )
             new_product_attribute.values.add(*values_obs)
 
-        new_product_attribute.values.add(*values_obs)
-        new_product_attribute.save()
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
