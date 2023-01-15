@@ -662,7 +662,7 @@ class AttributSerializer(serializers.ModelSerializer):
 
 
 class AuctionOrderSerializer(serializers.ModelSerializer):
-    current_payment = serializers.DecimalField(read_only=True, decimal_places=3, max_digits=10)
+    current_payment = serializers.IntegerField(read_only=True)
     directed = serializers.BooleanField(required=False)
     status = serializers.CharField(read_only=True)
     increase_amount = serializers.BooleanField(write_only=True)
