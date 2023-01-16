@@ -492,18 +492,20 @@ class ProductSerializer(serializers.ModelSerializer):
 
         instance.category = category
         if attrs:
-            if not len(AttributDetails.objects.filter(pk__in=attrs)) == len(attrs):
-                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
-            else:
-                values_obs = AttributDetails.objects.filter(pk__in=attrs)
-                for value in values_obs:
-                    attribute = value.attribut
-                    new_pd, created = ProductAttribut.objects.get_or_create(
-                        product=instance,
-                        attribut=attribute,
-                    )
-                    new_pd.values.add(*values_obs)
-                    new_pd.save()
+            attrs = attrs[0]
+            values_old = attrs['values']
+            values_new = [i['id'] for i in values_old]
+            attribute_id = attrs['attribute']
+            attribute = get_object_or_404(Attribut, pk=attribute_id)
+            values_obs = AttributDetails.objects.filter(pk__in=values_new)
+            new_pd = ProductAttribut.objects.create(
+                product=instance,
+                attribut=attribute,
+            )
+            for value in values_obs:
+                new_pd.values.add(value)
+                new_pd.save()
+
         if address:
             obj = Address.objects.filter(**address).first()
             if not obj:
@@ -531,22 +533,20 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.current_price = validated_data.get('min_price')
         instance.category = category
         if attrs:
-            if not len(AttributDetails.objects.filter(pk__in=attrs)) == len(attrs):
-                raise ValidationError(create_error('Not valid', 'you have to enter valid attribute'))
-            else:
-                values_obs = AttributDetails.objects.filter(pk__in=attrs)
-                attrs = instance.attrs.all()
-                for atr in attrs:
-                    atr.values.all().delete()
-
-                for value in values_obs:
-                    attribute = value.attribut
-                    new_pd, created = ProductAttribut.objects.get_or_create(
-                        product=instance,
-                        attribut=attribute,
-                    )
-                    new_pd.values.add(*values_obs)
-                    new_pd.save()
+            attrs = attrs[0]
+            values_old = attrs['values']
+            values_new = [i['id'] for i in values_old]
+            attribute_id = attrs['attribute']
+            attribute = get_object_or_404(Attribut, pk=attribute_id)
+            values_obs = AttributDetails.objects.filter(pk__in=values_new)
+            new_pd = ProductAttribut.objects.get(
+                product=instance,
+                attribut=attribute,
+            )
+            new_pd.values.all().delete()
+            for value in values_obs:
+                new_pd.values.add(value)
+                new_pd.save()
 
         if address:
             obj = Address.objects.filter(**address).first()
