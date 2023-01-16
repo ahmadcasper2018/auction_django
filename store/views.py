@@ -263,7 +263,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = Order.objects.get(pk=order_id)
         order.status = status
         order.save()
-        return Response(status=200)
+        return Response(status=200, data=OrderSerializer(order).data)
 
 
 class ProductOrderViewSet(viewsets.ModelViewSet):
