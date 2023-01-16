@@ -135,6 +135,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super(ProductViewSet, self).get_queryset()
         cat_id = self.request.query_params.get('cat_id', None)
+        code = self.request.query_params.get('code', None)
         brands = self.request.query_params.get('brands', None)
         my_products = self.request.query_params.get('my_products', None)
         tags_search = self.request.query_params.get('tags_search', None)
@@ -144,6 +145,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(brand__title__in=brands)
         if cat_id:
             queryset = queryset.filter(category__pk=int(cat_id))
+
+        if code:
+            queryset = queryset.filter(category__code=code)
         # if (not my_products) and (not (self.request.user.is_staff or self.request.user.is_superuser)):
         #     queryset = queryset.filter(status='a')
         if my_products:
