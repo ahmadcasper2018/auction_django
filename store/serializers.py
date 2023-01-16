@@ -573,6 +573,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'title',
             'start_time',
             'end_time',
+            'auction_success',
             'title_ar',
             'new',
             'tags',
