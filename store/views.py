@@ -249,6 +249,22 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
+    @action(detail=False, methods=['post'])
+    def change(self, request):
+        order_id = self.request.query_params.get('order_id', None)
+        status = self.request.query_params.get('status', None)
+        if not status:
+            raise ValidationError(create_error('status', 'you have to enter a valid status'))
+        if not order_id:
+            raise ValidationError(create_error('status', 'you have to enter a valid status'))
+        else:
+            if not Order.objects.filter(pk=order_id).exists():
+                raise ValidationError(create_error('Not found', 'Invalid order'))
+        order = Order.objects.get(pk=order_id)
+        order.status = status
+        order.save()
+        return Response(status=200)
+
 
 class ProductOrderViewSet(viewsets.ModelViewSet):
     queryset = ProductOrder.objects.all()
@@ -423,7 +439,7 @@ class MediaViewSet(viewsets.ModelViewSet):
         file = file[0]
         product = Product.objects.get(pk=product_id)
         attribute = Attribut.objects.get(pk=attribute)
-        value =  AttributDetails.objects.get(pk=value)
+        value = AttributDetails.objects.get(pk=value)
         new_medias = []
         new_media = Media.objects.create(file=file, alt=alt, value=value)
         new_media.attributes.add(attribute)

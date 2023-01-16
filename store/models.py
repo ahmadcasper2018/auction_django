@@ -334,15 +334,15 @@ class ShippingCompany(models.Model):
 
 
 class Order(models.Model):
-    PENDING = 'p'
-    SHIPPING = 's'
-    CANCLED = 'c'
-    DONE = 'd'
+    PENDING = 'pending'
+    SHIPPING = 'shipped'
+    CANCLED = 'cancled'
+
     STATUS_CHOICES = (
         (PENDING, 'Pending'),
         (SHIPPING, 'Shipping'),
         (CANCLED, 'Cancled'),
-        (DONE, 'Done')
+
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -357,7 +357,7 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
+    status = models.CharField(max_length=17, choices=STATUS_CHOICES, default=PENDING)
     address = models.CharField(max_length=128, null=True)
     lang = models.CharField(max_length=128, null=True)
     lat = models.CharField(max_length=128, null=True)
