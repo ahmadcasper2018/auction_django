@@ -514,6 +514,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 instance.address = obj
                 instance.save()
             instance.address = obj
+        ProductViewers.objects.create(product=instance)
         instance.save()
         return instance
 
