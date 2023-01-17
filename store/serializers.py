@@ -407,8 +407,6 @@ class ProductOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
 class ProductBrandSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title_current = serializers.CharField(read_only=True, source='title')
@@ -495,20 +493,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
         instance.category = category
         if attrs:
-            attrs = attrs[0]
-            values_old = attrs['values']
-            values_new = [i['id'] for i in values_old]
-            attribute_id = attrs['attribute']
-            attribute = get_object_or_404(Attribut, pk=attribute_id)
-            values_obs = AttributDetails.objects.filter(pk__in=values_new)
-
-            new_pd = ProductAttribut.objects.create(
-                product=instance,
-                attribut=attribute,
-            )
-            for value in values_obs:
-                new_pd.values.add(value)
-                new_pd.save()
+            for atr in attrs:
+                values_old = atr['values']
+                values_new = [i['id'] for i in values_old]
+                attribute_id = atr['attribute']
+                attribute = get_object_or_404(Attribut, pk=attribute_id)
+                values_obs = AttributDetails.objects.filter(pk__in=values_new)
+                new_pd = ProductAttribut.objects.create(
+                    product=instance,
+                    attribut=attribute,
+                )
+                for value in values_obs:
+                    new_pd.values.add(value)
+                    new_pd.save()
 
         if address:
             obj = Address.objects.filter(**address).first()
@@ -536,19 +533,21 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.current_price = validated_data.get('min_price')
         instance.category = category
         if attrs:
-            attrs = attrs[0]
-            values_old = attrs['values']
-            values_new = [i['id'] for i in values_old]
-            attribute_id = attrs['attribute']
-            attribute = get_object_or_404(Attribut, pk=attribute_id)
-            values_obs = AttributDetails.objects.filter(pk__in=values_new)
-            new_pd = ProductAttribut.objects.get(
-                product=instance,
-                attribut=attribute,
-            )
-            new_pd.values.all().delete()
-            for value in values_obs:
-                new_pd.values.add(value)
+            for atr in attrs:
+                values_old = atr['values']
+                values_new = [i['id'] for i in values_old]
+                attribute_id = atr['attribute']
+                attribute = get_object_or_404(Attribut, pk=attribute_id)
+                values_obs = AttributDetails.objects.filter(pk__in=values_new)
+                new_pd, created = ProductAttribut.objects.get_or_create(
+                    product=instance,
+                    attribut=attribute,
+                )
+                if not created:
+                    new_pd.values.all().delete()
+
+                for value in values_obs:
+                    new_pd.values.add(value)
                 new_pd.save()
 
         if address:
@@ -671,7 +670,6 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuctionOrder
         fields = '__all__'
-
 
 
 class SubOrderSerializer(serializers.ModelSerializer):
@@ -871,7 +869,6 @@ class OrderLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderLog
         fields = '__all__'
-
 
 
 class SubOrderSerializer(serializers.ModelSerializer):
