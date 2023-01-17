@@ -449,8 +449,9 @@ class ProductSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         data = self.context['request'].data
         title_en = data.get('title_en')
-        if len(Product.objects.filter(title=title_en)) > 1:
-            raise ValidationError(create_error('already exists', 'product'))
+        if self.context['request'].method == 'POST':
+            if len(Product.objects.filter(title=title_en)) > 1:
+                raise ValidationError(create_error('already exists', 'product'))
         category = data.get('category', None)
 
         if not category:
@@ -500,6 +501,7 @@ class ProductSerializer(serializers.ModelSerializer):
             attribute_id = attrs['attribute']
             attribute = get_object_or_404(Attribut, pk=attribute_id)
             values_obs = AttributDetails.objects.filter(pk__in=values_new)
+
             new_pd = ProductAttribut.objects.create(
                 product=instance,
                 attribut=attribute,
@@ -525,7 +527,6 @@ class ProductSerializer(serializers.ModelSerializer):
         attrs = self.context['request'].data.get('attrs', None)
         address = validated_data.pop('address', None)
         validated_data.update({"user": self.context['request'].user})
-        instance = super(ProductSerializer, self).create(validated_data)
         category = Category.objects.get(pk=category)
         if brand:
             if not Brand.objects.filter(pk=brand).exists():
