@@ -407,6 +407,8 @@ class ProductOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+
 class ProductBrandSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title_current = serializers.CharField(read_only=True, source='title')
@@ -670,9 +672,27 @@ class AuctionOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+class SubOrderSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    price = serializers.SerializerMethodField(read_only=True)
+    attrs = AttributDetailsSerializer(read_only=True, many=True)
+    product = ProductSerializer(read_only=True)
+
+    # product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    # directed_bazar = serializers.BooleanField()
+
+    def get_price(self, instance):
+        return instance.product.price * instance.quantity
+
+    class Meta:
+        model = ProductOrder
+        fields = '__all__'
+
+
 class OrderSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField(read_only=True)
-    product_orders = ProductOrderSerializer(read_only=True, many=True)
+    product_orders = SubOrderSerializer(read_only=True, many=True)
     status = serializers.CharField(read_only=True)
     username = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
@@ -849,4 +869,22 @@ class OrderLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderLog
+        fields = '__all__'
+
+
+
+class SubOrderSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    price = serializers.SerializerMethodField(read_only=True)
+    attrs = AttributDetailsSerializer(read_only=True, many=True)
+    product = ProductSerializer(read_only=True)
+
+    # product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    # directed_bazar = serializers.BooleanField()
+
+    def get_price(self, instance):
+        return instance.product.price * instance.quantity
+
+    class Meta:
+        model = ProductOrder
         fields = '__all__'
