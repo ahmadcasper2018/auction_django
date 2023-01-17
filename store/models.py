@@ -334,9 +334,9 @@ class ShippingCompany(models.Model):
 
 
 class Order(models.Model):
-    PENDING = 'pending'
-    SHIPPING = 'shipped'
-    CANCLED = 'cancled'
+    PENDING = 'p'
+    SHIPPING = 's'
+    CANCLED = 'c'
 
     STATUS_CHOICES = (
         (PENDING, 'Pending'),
