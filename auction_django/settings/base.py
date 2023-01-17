@@ -236,8 +236,8 @@ CORS_ORIGIN_WHITELIST = (
     "https://127.0.0.1:4200",
     "https://front-wabel.incareg.com",
     "http://front-wabel.incareg.com",
-    "http://dashboard-wabel.incareg.com/",
-    "https://dashboard-wabel.incareg.com/",
+    "http://dashboard-wabel.incareg.com",
+    "https://dashboard-wabel.incareg.com",
 )
 
 DEFAULT_FROM_EMAIL = "ahmadsy88@gmail.com"
