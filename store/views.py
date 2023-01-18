@@ -9,6 +9,8 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from authentication.models import Review
+from authentication.serializers import ReviewSerializer
 from general.models import ContactSettings
 from general.permessions import SettingsAccress
 from general.serializers import ContactSettingsSerializer
@@ -545,6 +547,9 @@ class PageViewSet(viewsets.ModelViewSet):
         products = Product.objects.none()
         news = Product.objects.none()
         popular = Product.objects.none()
+        reviews = Review.objects.all().order_by('?')
+        if len(reviews) > 20:
+            reviews = reviews[:20]
         sales = Product.objects.none()
         try:
             logo = Media.objects.filter(is_logo=True).last()
@@ -577,6 +582,7 @@ class PageViewSet(viewsets.ModelViewSet):
             data = {'page_type': serializer.data['page_type'],
                     'id': serializer.data['id'],
                     'page': serializer.data,
+                    'reviews': ReviewSerializer(reviews, many=True).data,
                     'new': ProductSerializer(news, many=True).data,
                     'popular': ProductSerializer(popular, many=True).data,
                     'sale': ProductSerializer(sales, many=True).data,
