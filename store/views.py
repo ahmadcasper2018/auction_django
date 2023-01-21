@@ -433,8 +433,8 @@ class MediaViewSet(viewsets.ModelViewSet):
         if not attribute:
             raise ValidationError(create_error('value', "enter a value"))
         else:
-            if not Attribut.objects.filter(pk=value).exists():
-                raise ValidationError(create_error('value', "enter a value"))
+            if not Attribut.objects.filter(pk=attribute).exists():
+                raise ValidationError(create_error('value', "enter an attribute"))
         product_id = self.request.query_params.get('product_id', None)
         if not product_id:
             raise ValidationError(create_error('Product', "enter a valid product"))
