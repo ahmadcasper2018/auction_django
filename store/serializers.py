@@ -494,8 +494,7 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.category = category
         if attrs:
             for atr in attrs:
-                values_old = atr['values']
-                values_new = [i['id'] for i in values_old]
+                values_new = atr['values']
                 attribute_id = atr['attribute']
                 attribute = get_object_or_404(Attribut, pk=attribute_id)
                 values_obs = AttributDetails.objects.filter(pk__in=values_new)
@@ -505,7 +504,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 )
                 for value in values_obs:
                     new_pd.values.add(value)
-                    new_pd.save()
+                new_pd.save()
 
         if address:
             obj = Address.objects.filter(**address).first()
@@ -535,8 +534,7 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.category = category
         if attrs:
             for atr in attrs:
-                values_old = atr['values']
-                values_new = [i['id'] for i in values_old]
+                values_new = atr['values']
                 attribute_id = atr['attribute']
                 attribute = get_object_or_404(Attribut, pk=attribute_id)
                 values_obs = AttributDetails.objects.filter(pk__in=values_new)
@@ -544,11 +542,8 @@ class ProductSerializer(serializers.ModelSerializer):
                     product=instance,
                     attribut=attribute,
                 )
-                if not created:
-                    new_pd.values.all().delete()
 
-                for value in values_obs:
-                    new_pd.values.add(value)
+                new_pd.values.set(list(values_obs))
                 new_pd.save()
 
         if address:
