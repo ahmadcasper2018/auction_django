@@ -547,9 +547,7 @@ class PageViewSet(viewsets.ModelViewSet):
         products = Product.objects.none()
         news = Product.objects.none()
         popular = Product.objects.none()
-        reviews = Review.objects.all().order_by('?')
-        if len(reviews) > 20:
-            reviews = reviews[:20]
+
         sales = Product.objects.none()
         try:
             logo = Media.objects.filter(is_logo=True).last()
@@ -575,14 +573,22 @@ class PageViewSet(viewsets.ModelViewSet):
             popular = products
 
         if not page_type:
+            reviews = Review.objects.all().order_by('?')
+            if len(reviews) > 20:
+                reviews = reviews[:20]
             serializer = self.get_serializer(queryset, many=True)
-            data = {'pages': serializer.data}
+            data = {'pages': serializer.data,
+                    'reviews': ReviewSerializer(reviews, many=True).data,
+                    }
         else:
+            page_reviews =  Review.objects.filter(product__category__code=page_type)
+            if len(page_reviews) > 20:
+                page_reviews = page_reviews[:20]
             serializer = self.get_serializer(queryset)
             data = {'page_type': serializer.data['page_type'],
                     'id': serializer.data['id'],
                     'page': serializer.data,
-                    'reviews': ReviewSerializer(reviews, many=True).data,
+                    'reviews': ReviewSerializer(page_reviews, many=True).data,
                     'new': ProductSerializer(news, many=True).data,
                     'popular': ProductSerializer(popular, many=True).data,
                     'sale': ProductSerializer(sales, many=True).data,
