@@ -73,7 +73,7 @@ class AttributDetails(models.Model):
         return self.value
 
 
-class Category(SoftDeleteModel):
+class Category(models.Model):
     AUCTION = 'auctions'
     SHOP = 'shops'
     BAZAR = 'bazaar'
