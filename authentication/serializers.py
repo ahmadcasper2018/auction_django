@@ -73,6 +73,7 @@ class AddressSerializer(serializers.Serializer):
 
 class PhoneSerializer(serializers.ModelSerializer):
     phone = serializers.CharField()
+    type = serializers.CharField()
 
     def validate_phone(self, value):
         try:
@@ -80,6 +81,9 @@ class PhoneSerializer(serializers.ModelSerializer):
             return value
         except ValidationError:
             raise ValidationError('please enter a valid phone number')
+
+    def validate(self, attrs):
+        return attrs
 
     class Meta:
         model = Phone
@@ -107,9 +111,9 @@ class WalletSerializer(serializers.ModelSerializer):
         old_amount = instance.amount
         new_amount = validated_data.get('amount')
         withdraw = new_amount - old_amount
-        instance.amount +=  new_amount
+        instance.amount += new_amount
         instance.save()
-        WalletLog.objects.create(wallet=instance,withdraw=str(withdraw))
+        WalletLog.objects.create(wallet=instance, withdraw=str(withdraw))
         return instance
 
     class Meta:
@@ -239,14 +243,14 @@ class UserExtendedSerializer(UserSerializer):
         user = self.context['request'].user
         phones = validated_data.pop('phones', None)
         addresses = validated_data.pop('addresses', None)
-        username = validated_data.pop('username', None)
-        user_role = validated_data.pop('user_role', 'normal')
+        username = self.context['request'].data.get('username', None)
+        user_role = self.context['request'].data.get('user_role', 'normal')
         if User.objects.filter(username=username).exclude(pk=user.pk):
             raise ValidationError({"User exist": "user with this name already exists!"})
 
         is_superuser = False
         is_staff = False
-        if user_role == 'superuser':
+        if user_role == 'super_admin':
             is_superuser = True
             is_staff = True
         elif user_role == 'admin':
@@ -260,20 +264,15 @@ class UserExtendedSerializer(UserSerializer):
 
         if phones:
             instance.phones.all().delete()
-            Phone.objects.filter(user=user).delete()
             for phone in phones:
-                obj, created = Phone.objects.get_or_create(user=instance, **phone)
-                obj.phone = phone.get('phone', obj.phone)
-                obj.type = phone.get('type', obj.phone)
-                obj.save()
-                instance.phones.add(obj)
+                Phone.objects.create(user=instance, **phone)
+
         if addresses:
+            new_addresses = []
             for location in addresses:
-                obj, created = Address.objects.get_or_create(user=instance, **location)
-                obj.city = location.get('city', obj.city)
-                obj.address = location.get('address', obj.address)
-                obj.save()
-                instance.addresses.add(obj)
+                obj = Address.objects.get(user=instance, **location)
+                new_addresses.append(obj)
+            instance.addresses.set(new_addresses)
 
         instance.save()
         return super(UserExtendedSerializer, self).update(instance, validated_data)

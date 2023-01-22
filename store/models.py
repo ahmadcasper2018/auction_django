@@ -337,11 +337,13 @@ class Order(models.Model):
     PENDING = 'p'
     SHIPPING = 's'
     CANCLED = 'c'
+    ACCEPTED = 'a'
 
     STATUS_CHOICES = (
         (PENDING, 'Pending'),
         (SHIPPING, 'Shipping'),
         (CANCLED, 'Cancled'),
+        (ACCEPTED, 'Accepted'),
 
     )
     user = models.ForeignKey(
