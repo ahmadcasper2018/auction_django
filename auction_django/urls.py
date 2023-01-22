@@ -21,6 +21,7 @@ from django.http import JsonResponse, HttpResponse
 from allauth.socialaccount.providers.google import views as google_views
 
 from authentication.views import PasswordResetRequest, GoogleLoginView
+from store.views import Statistics
 
 
 def index(request):
@@ -40,6 +41,7 @@ urlpatterns = [
     path('dj-rest-auth/', include('dj_rest_auth.urls')),
     path('rest-auth/google/', GoogleLoginView.as_view()),
     path('', index),
+    path('overview/', Statistics.as_view()),
     path('general/', include('general.urls')),
     path('reset_password/<str:uid>/<str:token>/', PasswordResetRequest.as_view())
 ]

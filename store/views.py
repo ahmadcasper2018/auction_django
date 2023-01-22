@@ -1,13 +1,15 @@
 import random
 
 from django.core.files import File
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from authentication.models import Review
 from authentication.serializers import ReviewSerializer
@@ -581,7 +583,7 @@ class PageViewSet(viewsets.ModelViewSet):
                     'reviews': ReviewSerializer(reviews, many=True).data,
                     }
         else:
-            page_reviews =  Review.objects.filter(product__category__code=page_type)
+            page_reviews = Review.objects.filter(product__category__code=page_type)
             if len(page_reviews) > 20:
                 page_reviews = page_reviews[:20]
             serializer = self.get_serializer(queryset)
@@ -668,3 +670,53 @@ class OrderLogViewSet(viewsets.ReadOnlyModelViewSet):
         if not (self.request.user.is_superuser or self.request.user.is_staff):
             qs = qs.filter(by=self.request.user)
         return qs
+
+
+class Statistics(APIView):
+    renderer_classes = [JSONRenderer]
+
+    def get(self, request, *args, **kwargs):
+        orders = Order.objects.all()
+        users = User.objects.all().count()
+        products = Product.objects.all()
+        popular = products.annotate(order_count=Count('product_orders')).order_by('-order_count')
+        if len(popular) > 20:
+            popular = popular[:20]
+        product_reviews = Review.objects.filter(product__isnull=False).count()
+        total_orders = orders.count()
+        pending_orders = orders.filter(status=Order.PENDING)
+        shipped_orders = orders.filter(status=Order.SHIPPING)
+        accepted_orders = orders.filter(status=Order.ACCEPTED)
+        cancled_orders = orders.filter(status=Order.CANCLED)
+        # pending_month = pending_orders.annotate(month=TruncMonth('createdat')).values('month').annotate(
+        #     total=Count('id')).order_by('createdat')
+        # accepted_month = accepted_orders.annotate(month=TruncMonth('createdat')).values('month').annotate(
+        #     total=Count('id')).order_by('createdat')
+        pending_months = []
+        accepted_months = []
+        dates = orders.filter(status__in=[Order.ACCEPTED, Order.PENDING]).order_by('createdat').values_list(
+            'createdat', flat=True)
+        cleaned_dates = dates.distinct()
+        show_dates = [month.strftime("%Y-%m-%d") for month in cleaned_dates]
+        for date in cleaned_dates:
+            current = orders.filter(createdat=date)
+            pending_months.append(current.filter(status=Order.PENDING).count())
+            accepted_months.append(current.filter(status=Order.ACCEPTED).count())
+
+        data = {
+            'users': users,
+            'products': products.count(),
+            'product_reviews': product_reviews,
+            'total_orders': total_orders,
+            'pending_orders': pending_orders.count(),
+            'cancled_orders': cancled_orders.count(),
+            'shipped_orders': shipped_orders.count(),
+            'accepted_orders': accepted_orders.count(),
+            'pending_month': pending_months,
+            'accepted_month': accepted_months,
+            'most_purchased': ProductSerializer(popular, many=True).data,
+            'dates': show_dates,
+
+        }
+        response = Response(data, status=200)
+        return response

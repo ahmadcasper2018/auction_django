@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.conf import settings
-
+from datetime import date
 from django_softdelete.models import SoftDeleteModel
 from django_extensions.db.models import TimeStampedModel
 from phonenumber_field.modelfields import PhoneNumberField
@@ -364,6 +364,7 @@ class Order(models.Model):
     lang = models.CharField(max_length=128, null=True)
     lat = models.CharField(max_length=128, null=True)
     phone = PhoneNumberField(null=True, blank=False)
+    createdat = models.DateField(auto_now_add=True)
     zip = models.CharField(max_length=24, null=True)
 
     def __str__(self):
