@@ -448,7 +448,7 @@ class ProductSerializer(serializers.ModelSerializer):
         data = self.context['request'].data
         title_en = data.get('title_en')
         if self.context['request'].method == 'POST':
-            if len(Product.objects.filter(title=title_en)) > 1:
+            if len(Product.objects.filter(title=title_en)) >= 1:
                 raise ValidationError(create_error('already exists', 'product'))
         category = data.get('category', None)
 
