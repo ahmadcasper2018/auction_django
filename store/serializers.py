@@ -494,7 +494,8 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.category = category
         if attrs:
             for atr in attrs:
-                values_new = atr['values']
+                values_old = atr['values']
+                values_new = [i['id'] for i in values_old]
                 attribute_id = atr['attribute']
                 attribute = get_object_or_404(Attribut, pk=attribute_id)
                 values_obs = AttributDetails.objects.filter(pk__in=values_new)
@@ -534,7 +535,8 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.category = category
         if attrs:
             for atr in attrs:
-                values_new = atr['values']
+                values_old = atr['values']
+                values_new = [i['id'] for i in values_old]
                 attribute_id = atr['attribute']
                 attribute = get_object_or_404(Attribut, pk=attribute_id)
                 values_obs = AttributDetails.objects.filter(pk__in=values_new)
